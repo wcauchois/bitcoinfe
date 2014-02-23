@@ -32,7 +32,7 @@
               <th>Amount</th>
             </tr>
             {{#transactions}}
-              <tr class="transaction">
+              <tr class="hoverRow">
                 <td>
                   {{#issend}}
                     <span class="glyphicon glyphicon-arrow-right negative"></span>
@@ -51,6 +51,30 @@
                 </td>
               </tr>
             {{/transactions}}
+          </table>
+        </div>
+      {% endraw %}
+    </script>
+    <script type="text/template" data-name="addressList">
+      {% raw %}
+        <div class="addressList">
+          <table class="table">
+            <tr>
+              <th>Address</th>
+              <th>Balance</th>
+              <th>Transaction IDs</th>
+            </tr>
+            {{#addresses}}
+              <tr>
+                <td>{{address}}</td>
+                <td><span class="amount positive">{{amount}}</span></td>
+                <td>
+                  {{#txlist}}
+                    <tt>{{id}}</tt><br/>
+                  {{/txlist}}
+                </td>
+              </tr>
+            {{/addresses}}
           </table>
         </div>
       {% endraw %}
@@ -76,6 +100,13 @@
         <div class="col-md-12">
           <h3>Transactions</h3>
           <div class="transactionListContainer">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-10">
+          <h3>Addresses</h3>
+          <div class="addressListContainer">
           </div>
         </div>
       </div>

@@ -39,6 +39,12 @@ def list_transactions_json():
   tx_list = BtcClient.instance().listtransactions()
   return flask.jsonify({'transactions': tx_list})
 
+@app.route('/list_addresses')
+@cache.cached(timeout=5)
+def list_addresses_json():
+  addr_list = BtcClient.instance().listreceivedbyaddress(0, True)
+  return flask.jsonify({'addresses': addr_list})
+
 @app.route('/get_exchange_rate')
 def get_exchange_rate_json():
   r = requests.get('https://api.bitcoinaverage.com/exchanges/USD')

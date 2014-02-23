@@ -2,8 +2,16 @@
 @positiveColor: #42DA86;
 @negativeColor: #F14545;
 
+.positive {color: @positiveColor;}
+.negative {color: @negativeColor;}
+.amount {font-weight: bold;}
+
+tr.hoverRow:hover {
+  background-color: #eee;
+}
+
 .balance {
-  font-size: 19px;
+  font-size: 20px;
   .balanceBtc {
     color: @positiveColor;
     font-weight: bold;
@@ -14,17 +22,6 @@
 }
 
 .transactionList {
-  .positive {color: @positiveColor;}
-  .negative {color: @negativeColor;}
-
-  tr.transaction:hover {
-    background-color: #eee;
-  }
-
-  .amount {
-    font-weight: bold;
-  }
-
   .transactionTime {
     text-transform: uppercase;
   }

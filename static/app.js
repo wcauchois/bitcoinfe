@@ -52,9 +52,21 @@ function augmentTxRecord(rec) {
   }, rec);
 }
 
+function augmentAddressRecord(rec) {
+  return _.extend({
+    'txlist': rec['txids'] && rec['txids'].map(function(x) { return {'id': x}; })
+  }, rec);
+}
+
 $.getJSON('/list_transactions', function(data) {
   $('.transactionListContainer').html(templates.transactionList({
     transactions: data.transactions.map(augmentTxRecord)
+  }));
+});
+
+$.getJSON('/list_addresses', function(data) {
+  $('.addressListContainer').html(templates.addressList({
+    addresses: data.addresses.map(augmentAddressRecord)
   }));
 });
 
