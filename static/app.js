@@ -23,3 +23,38 @@ $.when(
   }));
 });
 
+var formatDate = (function(monthNames) {
+  // Jan 21, 2014 [10:11 PM]
+  return function(date) {
+    var hours = date.getHours();
+    var clampedHours = (hours > 12) ? (hours - 12) : hours;
+    var clockPeriod = (hours >= 12) ? 'PM' : 'AM';
+    return monthNames[date.getMonth()] + ' ' +
+      date.getDate().toString() + ', ' +
+      date.getFullYear().toString() + ' [' +
+      clampedHours + ':' + date.getMinutes() +
+      ' ' + clockPeriod + ']';
+  };
+})(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']);
+
+var humanReadableCategories = {
+  'send': 'Sent bitcoin',
+  'receive': 'Received bitcoin'
+};
+
+function augmentTxRecord(rec) {
+  return _.extend({
+    'timestring': rec['time'] && formatDate(new Date(rec['time'] * 1000.0)),
+    'description': (humanReadableCategories[rec['category']] || rec['category']),
+    'issend': rec['category'] === 'send',
+    'isreceive': rec['category'] === 'receive',
+    'amtpos': rec['amount'] >= 0.0
+  }, rec);
+}
+
+$.getJSON('/list_transactions', function(data) {
+  $('.transactionListContainer').html(templates.transactionList({
+    transactions: data.transactions.map(augmentTxRecord)
+  }));
+});
+

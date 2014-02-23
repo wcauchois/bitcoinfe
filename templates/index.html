@@ -21,6 +21,40 @@
         </div>
       {% endraw %}
     </script>
+    <script type="text/template" data-name="transactionList">
+      {% raw %}
+        <div class="transactionList">
+          <table class="table">
+            <tr>
+              <th>Transaction</th>
+              <th>Date</th>
+              <th>Address</th>
+              <th>Amount</th>
+            </tr>
+            {{#transactions}}
+              <tr class="transaction">
+                <td>
+                  {{#issend}}
+                    <span class="glyphicon glyphicon-arrow-right negative"></span>
+                  {{/issend}}
+                  {{#isreceive}}
+                    <span class="glyphicon glyphicon-arrow-left positive"></span>
+                  {{/isreceive}}
+                  {{description}}
+                </td>
+                <td><span class="transactionTime">{{timestring}}</span></td>
+                <td>{{address}}</td>
+                <td>
+                  <span class="amount {{#amtpos}}positive{{/amtpos}}{{^amtpos}}negative{{/amtpos}}">
+                    {{amount}}
+                  </span>
+                </td>
+              </tr>
+            {{/transactions}}
+          </table>
+        </div>
+      {% endraw %}
+    </script>
   </head>
   <body>
     <nav class="navbar navbar-default" role="navigation">
@@ -41,6 +75,8 @@
       <div class="row">
         <div class="col-md-12">
           <h3>Transactions</h3>
+          <div class="transactionListContainer">
+          </div>
         </div>
       </div>
     </div>

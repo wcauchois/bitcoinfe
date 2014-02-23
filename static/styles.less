@@ -1,12 +1,32 @@
 
+@positiveColor: #42DA86;
+@negativeColor: #F14545;
+
 .balance {
   font-size: 19px;
   .balanceBtc {
-    color: #42DA86;
+    color: @positiveColor;
     font-weight: bold;
   }
   .balanceApproxUSD {
     color: #999;
+  }
+}
+
+.transactionList {
+  .positive {color: @positiveColor;}
+  .negative {color: @negativeColor;}
+
+  tr.transaction:hover {
+    background-color: #eee;
+  }
+
+  .amount {
+    font-weight: bold;
+  }
+
+  .transactionTime {
+    text-transform: uppercase;
   }
 }
 
