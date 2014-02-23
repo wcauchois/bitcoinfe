@@ -1,0 +1,4 @@
+flask
+-e git://github.com/jgarzik/python-bitcoinrpc.git#egg=python-bitcoinrpc
+Flask-Cache
+requests

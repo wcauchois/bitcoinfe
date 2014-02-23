@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bitcoin Wallet</title>
+    <link rel="icon" href="static/favicon.ico" type="image/x-icon" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script src="static/3rdparty/mustache.min.js"></script>
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <link rel="stylesheet/less" type="text/css" href="static/styles.less" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/1.6.2/less.min.js"></script>
+
+    <script type="text/template" data-name="bitcoinBalance">
+      {% raw %}
+        <div class="balance">
+          <span class="balanceBtc">{{bitcoins}} BTC</span>
+          <span class="balanceApproxUSD">&asymp; {{dollars}} USD</span>
+        </div>
+      {% endraw %}
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="/">Bitcoin Wallet</a>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-12">
+          <h3>Current Balance</h3>
+          <div class="balanceContainer">
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h3>Transactions</h3>
+        </div>
+      </div>
+    </div>
+
+    <script src="static/app.js"></script>
+  </body>
+</html>
