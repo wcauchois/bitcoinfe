@@ -29,6 +29,7 @@
               <th>Transaction</th>
               <th>Date</th>
               <th>Address</th>
+              <th>Status</th>
               <th>Amount</th>
             </tr>
             {{#transactions}}
@@ -44,6 +45,7 @@
                 </td>
                 <td><span class="transactionTime">{{timestring}}</span></td>
                 <td>{{address}}</td>
+                <td><span class="status {{statuscode}}">{{status}}</span></td>
                 <td>
                   <span class="amount {{#amtpos}}positive{{/amtpos}}{{^amtpos}}negative{{/amtpos}}">
                     {{amount}}

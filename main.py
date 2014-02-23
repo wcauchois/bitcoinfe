@@ -37,6 +37,7 @@ def get_balance_json():
 @cache.cached(timeout=5)
 def list_transactions_json():
   tx_list = BtcClient.instance().listtransactions()
+  tx_list.reverse() # Most recent TX at the top.
   return flask.jsonify({'transactions': tx_list})
 
 @app.route('/list_addresses')

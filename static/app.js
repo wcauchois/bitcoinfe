@@ -43,12 +43,15 @@ var humanReadableCategories = {
 };
 
 function augmentTxRecord(rec) {
+  var complete = rec['confirmations'] && rec['confirmations'] > 6;
   return _.extend({
     'timestring': rec['time'] && formatDate(new Date(rec['time'] * 1000.0)),
     'description': (humanReadableCategories[rec['category']] || rec['category']),
     'issend': rec['category'] === 'send',
     'isreceive': rec['category'] === 'receive',
-    'amtpos': rec['amount'] >= 0.0
+    'amtpos': rec['amount'] >= 0.0,
+    'statuscode': complete ? 'complete' : 'pending',
+    'status': complete ? 'Complete' : 'Pending'
   }, rec);
 }
 
