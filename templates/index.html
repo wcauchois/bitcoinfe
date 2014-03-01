@@ -28,12 +28,12 @@
             <tr>
               <th>Transaction</th>
               <th>Date</th>
-              <th>Address</th>
+              <th class="hidden-xs">Address</th>
               <th>Status</th>
               <th>Amount</th>
             </tr>
             {{#transactions}}
-              <tr class="hoverRow">
+              <tr class="hoverRow transaction" data-txid="{{txid}}">
                 <td>
                   {{#issend}}
                     <span class="glyphicon glyphicon-arrow-right negative"></span>
@@ -44,7 +44,7 @@
                   {{description}}
                 </td>
                 <td><span class="transactionTime">{{timestring}}</span></td>
-                <td>{{address}}</td>
+                <td class="hidden-xs">{{address}}</td>
                 <td><span class="status {{statuscode}}">{{status}}</span></td>
                 <td>
                   <span class="amount {{#amtpos}}positive{{/amtpos}}{{^amtpos}}negative{{/amtpos}}">
@@ -64,15 +64,18 @@
             <tr>
               <th>Address</th>
               <th>Balance</th>
-              <th>Transaction IDs</th>
+              <th class="hidden-xs">Transaction IDs</th>
             </tr>
             {{#addresses}}
               <tr>
-                <td>{{address}}</td>
-                <td><span class="amount positive">{{amount}}</span></td>
                 <td>
+                  <span class="hidden-xs">{{address}}</span>
+                  <span class="visible-xs">{{elidedAddress}}</span>
+                </td>
+                <td><span class="amount positive">{{amount}}</span></td>
+                <td class="hidden-xs">
                   {{#txlist}}
-                    <tt>{{id}}</tt><br/>
+                    <a href="https://blockchain.info/tx/{{id}}" class="transactionLink" target="_blank">{{id}}</a><br/>
                   {{/txlist}}
                 </td>
               </tr>
@@ -81,6 +84,18 @@
         </div>
       {% endraw %}
     </script>
+    <script type="text/template" data-name="sendButton">
+      <div>
+        <button class="btn btn-primary sendButton">Send</button>
+      </div>
+    </script>
+    <script type="text/template" data-name="confirmSendButton">
+      <div>
+        <button type="button" class="close" aria-hidden="true">&times;</button>
+        Are you sure?
+        <button class="btn btn-primary confirmSendButton">Yes</button>
+      </div>
+    </script>
   </head>
   <body>
     <nav class="navbar navbar-default" role="navigation">
@@ -88,6 +103,9 @@
         <div class="navbar-header">
           <a class="navbar-brand" href="/">Bitcoin Wallet</a>
         </div>
+        <ul class="nav navbar-nav">
+          <li><a href="#sendBitcoin">Send Bitcoin</a></li>
+        </ul>
       </div>
     </nav>
     <div class="container">
@@ -112,6 +130,25 @@
           </div>
         </div>
       </div>
+      {# TODO
+      <div class="row" id="sendBitcoin">
+        <div class="col-md-4">
+          <h3>Send Bitcoin</h3>
+          <form role="form" id="sendBitcoinForm">
+            <div class="form-group">
+              <label for="bitcoinSendAddress">To Address:</label>
+              <input type="text" class="form-control" id="sendBitcoinAddress"/>
+            </div>
+            <div class="form-group">
+              <label for="bitcoinSendAmount">Amount:</label>
+              <input type="text" class="form-control" id="sendBitcoinAmount"/>
+            </div>
+            <div class="form-group submitContainer"></div>
+          </form>
+        </div>
+      </div>
+      <div style="height: 300px;"></div>
+      #}
     </div>
 
     <script src="static/app.js"></script>

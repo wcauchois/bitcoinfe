@@ -56,8 +56,10 @@ function augmentTxRecord(rec) {
 }
 
 function augmentAddressRecord(rec) {
+  var elidedAddress = rec['address'] && (rec['address'].substring(0, 20) + '...');
   return _.extend({
-    'txlist': rec['txids'] && rec['txids'].map(function(x) { return {'id': x}; })
+    'txlist': rec['txids'] && rec['txids'].map(function(x) { return {'id': x}; }),
+    'elidedAddress': elidedAddress
   }, rec);
 }
 
@@ -68,8 +70,24 @@ $.getJSON('/list_transactions', function(data) {
 });
 
 $.getJSON('/list_addresses', function(data) {
-  $('.addressListContainer').html(templates.addressList({
+  var $addressList = $(templates.addressList({
     addresses: data.addresses.map(augmentAddressRecord)
   }));
+  $addressList.find('.transactionLink').hover(function(e) {
+    $('.transaction[data-txid=' + $(e.target).text() + ']').addClass('simHover');
+  }, function(e) {
+    $('.transaction[data-txid=' + $(e.target).text() + ']').removeClass('simHover');
+  });
+  $('.addressListContainer').append($addressList);
 });
+
+/*
+var $sendBitcoinForm = $('#sendBitcoinForm');
+
+function revertSendBitcoinSubmit() {
+  var $newSubmit = $(templates.confirmSendButton());
+  $sendBitcoinForm.find('.submitContainer').empty().append($newSubmit);
+}
+revertSendBitcoinSubmit();
+*/
 
