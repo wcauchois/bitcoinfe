@@ -69,6 +69,11 @@ $.getJSON('/list_transactions', function(data) {
   }));
 });
 
+function getQRCodeURI(width, height, data) {
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=' +
+    width + 'x' + height + '&data=' + encodeURIComponent(data);
+}
+
 $.getJSON('/list_addresses', function(data) {
   var $addressList = $(templates.addressList({
     addresses: data.addresses.map(augmentAddressRecord)
@@ -79,6 +84,15 @@ $.getJSON('/list_addresses', function(data) {
     $('.transaction[data-txid=' + $(e.target).text() + ']').removeClass('simHover');
   });
   $('.addressListContainer').append($addressList);
+
+  $('.addressLink').click(function(e) {
+    var bitcoinAddress = $(e.target).data('address');
+    var $addressModal = $(templates.addressModal({
+      qrcodeUri: getQRCodeURI(200, 200, 'bitcoin:' + bitcoinAddress),
+      address: bitcoinAddress
+    }));
+    $addressModal.modal();
+  });
 });
 
 /*

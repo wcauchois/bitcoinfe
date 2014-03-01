@@ -69,8 +69,12 @@
             {{#addresses}}
               <tr>
                 <td>
-                  <span class="hidden-xs">{{address}}</span>
-                  <span class="visible-xs">{{elidedAddress}}</span>
+                  <span class="hidden-xs">
+                    <a href="javascript:" class="addressLink" data-address="{{address}}">{{address}}</a>
+                  </span>
+                  <span class="visible-xs">
+                    <a href="javascript:" class="addressLink" data-address="{{address}}">{{elidedAddress}}</a>
+                  </span>
                 </td>
                 <td><span class="amount positive">{{amount}}</span></td>
                 <td class="hidden-xs">
@@ -95,6 +99,29 @@
         Are you sure?
         <button class="btn btn-primary confirmSendButton">Yes</button>
       </div>
+    </script>
+    <script type="text/template" data-name="addressModal">
+      {% raw %}
+        <div class="modal fade addressModal">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button class="close" data-dismiss="modal">x</button>
+                <h4>Bitcoin Address</h4>
+              </div>
+              <div class="modal-body">
+                <div class="qrcodeContainer">
+                  <img src="{{qrcodeUri}}"/>
+                </div>
+                <div class="addressContainer">
+                  {{! Maybe use Clippy to copy to clipboard? https://github.com/mojombo/clippy }}
+                  <input type="text" class="form-control" value="{{address}}" onclick="this.select()">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endraw %}
     </script>
   </head>
   <body>
@@ -128,27 +155,35 @@
           <h3>Addresses</h3>
           <div class="addressListContainer">
           </div>
+          <div class="addressActions">
+            <form class="form-inline">
+              <div class="form-group">
+                <input type="text" class="form-control" placeholder="Account Name"/>
+              </div>
+              <div class="form-group">
+                <button type="button" class="btn btn-default">Get New Address</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-      {# TODO
+
+      {#
       <div class="row" id="sendBitcoin">
         <div class="col-md-4">
           <h3>Send Bitcoin</h3>
-          <form role="form" id="sendBitcoinForm">
+          <form>
             <div class="form-group">
-              <label for="bitcoinSendAddress">To Address:</label>
-              <input type="text" class="form-control" id="sendBitcoinAddress"/>
+              <input type="text" class="form-control" placeholder="To Address"/>
             </div>
-            <div class="form-group">
-              <label for="bitcoinSendAmount">Amount:</label>
-              <input type="text" class="form-control" id="sendBitcoinAmount"/>
-            </div>
-            <div class="form-group submitContainer"></div>
+            <input type="text" class="form-control" placeholder="Amount"/>
+            <button type="button" class="btn btn-default">Get New Address</button>
           </form>
         </div>
       </div>
-      <div style="height: 300px;"></div>
       #}
+
+      <div style="height: 300px;"></div>
     </div>
 
     <script src="static/app.js"></script>
