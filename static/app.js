@@ -1,18 +1,4 @@
 
-$.when(
-  $.getJSON('/get_balance'),
-  $.getJSON('/get_exchange_rate')
-).done(function(res1, res2) {
-  var balance = res1[0].balance;
-  var rate = res2[0].rate;
-  var convertedBalance = balance * rate;
-  $('.balanceContainer').html(templates.bitcoinBalance({
-    bitcoins: balance,
-    dollars: +convertedBalance.toFixed(6), // Round to 6 decimals
-    exchangeRate: rate
-  }));
-});
-
 var formatDate = (function(monthNames) {
   // Jan 21, 2014 [10:11 PM]
   return function(date) {
@@ -27,72 +13,171 @@ var formatDate = (function(monthNames) {
   };
 })(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']);
 
-var humanReadableCategories = {
-  'send': 'Sent bitcoin',
-  'receive': 'Received bitcoin'
-};
-
-function augmentTxRecord(rec) {
-  var complete = rec['confirmations'] && rec['confirmations'] > 6;
-  return _.extend({
-    'timestring': rec['time'] && formatDate(new Date(rec['time'] * 1000.0)),
-    'description': (humanReadableCategories[rec['category']] || rec['category']),
-    'issend': rec['category'] === 'send',
-    'isreceive': rec['category'] === 'receive',
-    'amtpos': rec['amount'] >= 0.0,
-    'statuscode': complete ? 'complete' : 'pending',
-    'status': complete ? 'Complete' : 'Pending'
-  }, rec);
-}
-
-function augmentAddressRecord(rec) {
-  var elidedAddress = rec['address'] && (rec['address'].substring(0, 20) + '...');
-  return _.extend({
-    'txlist': rec['txids'] && rec['txids'].map(function(x) { return {'id': x}; }),
-    'elidedAddress': elidedAddress
-  }, rec);
-}
-
-$.getJSON('/list_transactions', function(data) {
-  $('.transactionListContainer').html(templates.transactionList({
-    transactions: data.transactions.map(augmentTxRecord)
-  }));
-});
-
 function getQRCodeURI(width, height, data) {
   // http://goqr.me/api/
   return 'https://api.qrserver.com/v1/create-qr-code/?size=' +
     width + 'x' + height + '&data=' + encodeURIComponent(data);
 }
 
-$.getJSON('/list_addresses', function(data) {
-  var $addressList = $(templates.addressList({
-    addresses: data.addresses.map(augmentAddressRecord)
-  }));
-  $addressList.find('.transactionLink').hover(function(e) {
-    $('.transaction[data-txid=' + $(e.target).text() + ']').addClass('simHover');
-  }, function(e) {
-    $('.transaction[data-txid=' + $(e.target).text() + ']').removeClass('simHover');
-  });
-  $('.addressListContainer').append($addressList);
+var HomePage = Backbone.View.extend({
+  initialize: function(options) {
+    this.exchangeService_ = new ExchangeService({
+      exchangeRate: options.exchangeRate
+    });
+    this.walletService_ = new WalletService();
 
-  $('.addressLink').click(function(e) {
-    var bitcoinAddress = $(e.target).data('address');
-    var $addressModal = $(templates.addressModal({
-      qrcodeUri: getQRCodeURI(200, 200, 'bitcoin:' + bitcoinAddress),
-      address: bitcoinAddress
-    }));
-    $addressModal.modal();
-  });
+    this.bitcoinBalanceView_ = new BitcoinBalanceView({
+      el: this.$el.find('.balanceContainer'),
+      walletService: this.walletService_,
+      exchangeService: this.exchangeService_
+    });
+    this.transactionListView_ = new TransactionListView({
+      el: this.$el.find('.transactionListContainer')
+    });
+    this.addressListView_ = new AddressListView({
+      el: this.$el.find('.addressListContainer')
+    });
+  }
+}, {
+  init: function(options) {
+    window.currentPage = new HomePage(_.extend({
+      el: $('body')
+    }, options));
+  }
 });
 
-/*
-var $sendBitcoinForm = $('#sendBitcoinForm');
 
-function revertSendBitcoinSubmit() {
-  var $newSubmit = $(templates.confirmSendButton());
-  $sendBitcoinForm.find('.submitContainer').empty().append($newSubmit);
-}
-revertSendBitcoinSubmit();
-*/
+var ExchangeService = function() {
+  this.initialize.apply(this, arguments);
+};
+
+_.extend(ExchangeService.prototype, {
+  initialize: function(options) {
+    this.rate_ = options.exchangeRate;
+    this.inverseRate_ = (1.0 / options.exchangeRate);
+  },
+
+  getRate: function() {
+    return this.rate_;
+  },
+
+  dollarsToBtc: function(dollars) {
+    return dollars * this.inverseRate_;
+  },
+
+  btcToDollars: function(btc) {
+    return btc * this.rate_;
+  }
+});
+
+var WalletService = function() {
+  this.initialize.apply(this, arguments);
+};
+
+_.extend(WalletService.prototype, {
+  initialize: function() {
+    this.balancePromise_ = $.getJSON('/get_balance');
+    this.balancePromise_.done(_.bind(function(data) {
+      this.balance_ = data.balance;
+    }, this));
+  },
+
+  getBalance: function() {
+    return this.balance_;
+  },
+
+  getBalancePromise: function() {
+    return this.balancePromise_;
+  }
+});
+
+var BitcoinBalanceView = Backbone.View.extend({
+  initialize: function(options) {
+    this.exchangeService_ = options.exchangeService;
+    this.walletService_ = options.walletService;
+    this.walletService_.getBalancePromise().done(_.bind(this.render, this));
+  },
+
+  render: function() {
+    var balance = this.walletService_.getBalance()
+    this.$el.empty().append(templates.bitcoinBalance({
+      bitcoins: balance,
+      dollars: +this.exchangeService_.btcToDollars(balance).toFixed(6),
+      exchangeRate: this.exchangeService_.getRate()
+    }));
+    return this;
+  }
+});
+
+var TransactionListView = Backbone.View.extend({
+  initialize: function(options) {
+    $.getJSON('/list_transactions', _.bind(function(data) {
+      this.transactions_ = data.transactions;
+      this.render();
+    }, this));
+  },
+
+  renderTransaction_: function(tx) {
+    var complete = tx['confirmations'] && tx['confirmations'] > 6;
+    return _.extend({
+      'timestring': tx['time'] && formatDate(new Date(tx['time'] * 1000.0)),
+      'description': (TransactionListView.humanReadableCategories[tx['category']] || tx['category']),
+      'issend': tx['category'] === 'send',
+      'isreceive': tx['category'] === 'receive',
+      'amtpos': tx['amount'] >= 0.0,
+      'statuscode': complete ? 'complete' : 'pending',
+      'status': complete ? 'Complete' : 'Pending'
+    }, tx);
+  },
+
+  render: function() {
+    this.$el.empty().append(templates.transactionList({
+      transactions: _.map(this.transactions_, this.renderTransaction_, this)
+    }));
+    return this;
+  }
+}, {
+  humanReadableCategories: {
+  'send': 'Sent bitcoin',
+  'receive': 'Received bitcoin'
+  }
+});
+
+var AddressListView = Backbone.View.extend({
+  initialize: function(options) {
+    $.getJSON('/list_addresses', _.bind(function(data) {
+      this.addresses_ = data.addresses;
+      this.render();
+    }, this));
+  },
+
+  renderAddress_: function(address) {
+    var elidedAddress = address['address'] &&
+      (address['address'].substring(0, 20) + '...');
+    return _.extend({
+      'txlist': address['txids'] &&
+        _.map(address['txids'], function(x) { return {'id': x}; }),
+      'elidedAddress': elidedAddress
+    }, address);
+  },
+
+  decorate: function() {
+    this.$el.find('.addressLink').click(function(e) {
+      var bitcoinAddress = $(e.target).data('address');
+      var $addressModal = $(templates.addressModal({
+        qrcodeUri: getQRCodeURI(200, 200, 'bitcoin:' + bitcoinAddress),
+        address: bitcoinAddress
+      }));
+      $addressModal.modal();
+    });
+  },
+
+  render: function() {
+    this.$el.empty().append(templates.addressList({
+      addresses: _.map(this.addresses_, this.renderAddress_, this)
+    }));
+    this.decorate();
+    return this;
+  }
+});
 

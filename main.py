@@ -23,7 +23,16 @@ REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 @app.route('/')
 def index():
   templates = yaml.load(open('client/templates.yaml', 'r'))['templates']
-  return render_template('index.html', templates=templates)
+  exchange_rate = get_exchange_rate()
+  return render_template('index.html',
+    templates=templates,
+    exchangeRate=exchange_rate)
+
+@cache.cached(timeout=10, key_prefix='get_exchange_rate')
+def get_exchange_rate():
+  r = requests.get('https://api.bitcoinaverage.com/exchanges/USD')
+  json = r.json()
+  return json['bitstamp']['rates']['ask']
 
 @cache.cached(timeout=3, key_prefix='get_bitcoin_info')
 def get_bitcoin_info():
@@ -48,7 +57,7 @@ def list_addresses_json():
   return flask.jsonify({'addresses': addr_list})
 
 @app.route('/get_exchange_rate')
-def get_exchange_rate_json():
+def get_exchange_rate_json(): # XXX
   r = requests.get('https://api.bitcoinaverage.com/exchanges/USD')
   json = r.json()
   rate = json['bitstamp']['rates']['last']
