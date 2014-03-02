@@ -1,5 +1,4 @@
 import os, sys
-
 from bitcoinrpc.authproxy import AuthServiceProxy
 from cStringIO import StringIO
 import ConfigParser
@@ -9,6 +8,7 @@ from flask.ext.cache import Cache
 import flask
 import json
 import requests
+import yaml
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -22,7 +22,8 @@ REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 
 @app.route('/')
 def index():
-  return render_template('index.html')
+  templates = yaml.load(open('client/templates.yaml', 'r'))['templates']
+  return render_template('index.html', templates=templates)
 
 @cache.cached(timeout=3, key_prefix='get_bitcoin_info')
 def get_bitcoin_info():

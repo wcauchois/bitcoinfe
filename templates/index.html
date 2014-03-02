@@ -10,119 +10,15 @@
     <script src="static/3rdparty/mustache.min.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/backbone.js/1.1.2/backbone-min.js"></script>
     <link rel="stylesheet/less" type="text/css" href="static/styles.less" />
     <script src="//cdnjs.cloudflare.com/ajax/libs/less.js/1.6.2/less.min.js"></script>
 
-    <script type="text/template" data-name="bitcoinBalance">
-      {% raw %}
-        <div class="balance">
-          <span class="balanceBtc">{{bitcoins}} BTC</span>
-          <span class="balanceApproxUSD">&asymp; {{dollars}} USD</span>
-        </div>
-      {% endraw %}
-    </script>
-    <script type="text/template" data-name="transactionList">
-      {% raw %}
-        <div class="transactionList">
-          <table class="table">
-            <tr>
-              <th>Transaction</th>
-              <th>Date</th>
-              <th class="hidden-xs">Address</th>
-              <th>Status</th>
-              <th>Amount</th>
-            </tr>
-            {{#transactions}}
-              <tr class="hoverRow transaction" data-txid="{{txid}}">
-                <td>
-                  {{#issend}}
-                    <span class="glyphicon glyphicon-arrow-right negative"></span>
-                  {{/issend}}
-                  {{#isreceive}}
-                    <span class="glyphicon glyphicon-arrow-left positive"></span>
-                  {{/isreceive}}
-                  {{description}}
-                </td>
-                <td><span class="transactionTime">{{timestring}}</span></td>
-                <td class="hidden-xs">{{address}}</td>
-                <td><span class="status {{statuscode}}">{{status}}</span></td>
-                <td>
-                  <span class="amount {{#amtpos}}positive{{/amtpos}}{{^amtpos}}negative{{/amtpos}}">
-                    {{amount}}
-                  </span>
-                </td>
-              </tr>
-            {{/transactions}}
-          </table>
-        </div>
-      {% endraw %}
-    </script>
-    <script type="text/template" data-name="addressList">
-      {% raw %}
-        <div class="addressList">
-          <table class="table">
-            <tr>
-              <th>Address</th>
-              <th>Balance</th>
-              <th class="hidden-xs">Transaction IDs</th>
-            </tr>
-            {{#addresses}}
-              <tr>
-                <td>
-                  <span class="hidden-xs">
-                    <a href="javascript:" class="addressLink" data-address="{{address}}">{{address}}</a>
-                  </span>
-                  <span class="visible-xs">
-                    <a href="javascript:" class="addressLink" data-address="{{address}}">{{elidedAddress}}</a>
-                  </span>
-                </td>
-                <td><span class="amount positive">{{amount}}</span></td>
-                <td class="hidden-xs">
-                  {{#txlist}}
-                    <a href="https://blockchain.info/tx/{{id}}" class="transactionLink" target="_blank">{{id}}</a><br/>
-                  {{/txlist}}
-                </td>
-              </tr>
-            {{/addresses}}
-          </table>
-        </div>
-      {% endraw %}
-    </script>
-    <script type="text/template" data-name="sendButton">
-      <div>
-        <button class="btn btn-primary sendButton">Send</button>
-      </div>
-    </script>
-    <script type="text/template" data-name="confirmSendButton">
-      <div>
-        <button type="button" class="close" aria-hidden="true">&times;</button>
-        Are you sure?
-        <button class="btn btn-primary confirmSendButton">Yes</button>
-      </div>
-    </script>
-    <script type="text/template" data-name="addressModal">
-      {% raw %}
-        <div class="modal fade addressModal">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <div class="modal-header">
-                <button class="close" data-dismiss="modal">x</button>
-                <h4>Bitcoin Address</h4>
-              </div>
-              <div class="modal-body">
-                <div class="qrcodeContainer">
-                  <img src="{{qrcodeUri}}"/>
-                </div>
-                <div class="addressContainer">
-                  {{! Maybe use Clippy to copy to clipboard? https://github.com/mojombo/clippy }}
-                  <input type="text" class="form-control" value="{{address}}" onclick="this.select()">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      {% endraw %}
-    </script>
+    {% for template in templates %}
+      <script type="text/template" id="template-{{ template.name }}">
+        {{ template.content|safe }}
+      </script>
+    {% endfor %}
   </head>
   <body>
     <nav class="navbar navbar-default" role="navigation">
@@ -186,6 +82,19 @@
       <div style="height: 300px;"></div>
     </div>
 
+    <script>
+      var templates = {};
+      _.each([
+        {% for template in templates -%}
+          '{{ template.name }}',
+        {% endfor -%}
+      ], function(templateName) {
+        var templateContent = $('#template-' + templateName).text();
+        templates[templateName] = function(opts) {
+          return Mustache.render(templateContent, opts || {});
+        };
+      });
+    </script>
     <script src="static/app.js"></script>
   </body>
 </html>

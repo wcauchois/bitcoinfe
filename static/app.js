@@ -1,14 +1,4 @@
 
-var templates = {};
-
-$("script[type='text/template']").each(function(i, elem) {
-  var $elem = $(elem);
-  var templateContent = $elem.text();
-  templates[$elem.data('name')] = function(opts) {
-    return Mustache.render(templateContent, opts || {});
-  };
-});
-
 $.when(
   $.getJSON('/get_balance'),
   $.getJSON('/get_exchange_rate')
@@ -70,6 +60,7 @@ $.getJSON('/list_transactions', function(data) {
 });
 
 function getQRCodeURI(width, height, data) {
+  // http://goqr.me/api/
   return 'https://api.qrserver.com/v1/create-qr-code/?size=' +
     width + 'x' + height + '&data=' + encodeURIComponent(data);
 }

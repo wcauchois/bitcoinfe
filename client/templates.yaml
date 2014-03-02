@@ -1,0 +1,92 @@
+templates:
+  - name: bitcoinBalance
+    content: >
+      <div class="balance">
+        <span class="balanceBtc">{{bitcoins}} BTC</span>
+        <span class="balanceApproxUSD">&asymp; {{dollars}} USD</span>
+      </div>
+  - name: transactionList
+    content: >
+      <div class="transactionList">
+        <table class="table">
+          <tr>
+            <th>Transaction</th>
+            <th>Date</th>
+            <th class="hidden-xs">Address</th>
+            <th>Status</th>
+            <th>Amount</th>
+          </tr>
+          {{#transactions}}
+            <tr class="hoverRow transaction" data-txid="{{txid}}">
+              <td>
+                {{#issend}}
+                  <span class="glyphicon glyphicon-arrow-right negative"></span>
+                {{/issend}}
+                {{#isreceive}}
+                  <span class="glyphicon glyphicon-arrow-left positive"></span>
+                {{/isreceive}}
+                {{description}}
+              </td>
+              <td><span class="transactionTime">{{timestring}}</span></td>
+              <td class="hidden-xs">{{address}}</td>
+              <td><span class="status {{statuscode}}">{{status}}</span></td>
+              <td>
+                <span class="amount {{#amtpos}}positive{{/amtpos}}{{^amtpos}}negative{{/amtpos}}">
+                  {{amount}}
+                </span>
+              </td>
+            </tr>
+          {{/transactions}}
+        </table>
+      </div>
+  - name: addressList
+    content: >
+      <div class="addressList">
+        <table class="table">
+          <tr>
+            <th>Address</th>
+            <th>Balance</th>
+            <th class="hidden-xs">Transaction IDs</th>
+          </tr>
+          {{#addresses}}
+            <tr>
+              <td>
+                <span class="hidden-xs">
+                  <a href="javascript:" class="addressLink" data-address="{{address}}">{{address}}</a>
+                </span>
+                <span class="visible-xs">
+                  <a href="javascript:" class="addressLink" data-address="{{address}}">{{elidedAddress}}</a>
+                </span>
+              </td>
+              <td><span class="amount positive">{{amount}}</span></td>
+              <td class="hidden-xs">
+                {{#txlist}}
+                  <a href="https://blockchain.info/tx/{{id}}" class="transactionLink" target="_blank">{{id}}</a><br/>
+                {{/txlist}}
+              </td>
+            </tr>
+          {{/addresses}}
+        </table>
+      </div>
+  - name: addressModal
+    content: >
+      <div class="modal fade addressModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button class="close" data-dismiss="modal">x</button>
+              <h4>Bitcoin Address</h4>
+            </div>
+            <div class="modal-body">
+              <div class="qrcodeContainer">
+                <img src="{{qrcodeUri}}"/>
+              </div>
+              <div class="addressContainer">
+                {{! Maybe use Clippy to copy to clipboard? https://github.com/mojombo/clippy }}
+                <input type="text" class="form-control" value="{{address}}" onclick="this.select()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
