@@ -89,4 +89,59 @@ templates:
           </div>
         </div>
       </div>
+  - name: sendBitcoin
+    content: >
+      <div class="modal fade sendBitcoinModal">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <button class="close" data-dismiss="modal">x</button>
+              <h4>Send Bitcoin</h4>
+            </div>
+            <div class="modal-body">
+              <form>
+                <div class="form-group">
+                  <label for="sendToAddress">Send To</label>
+                  <input type="text" class="form-control sendToAddress" id="sendToAddress" placeholder="Bitcoin address"/>
+                  <div class="validation failure invalidAddress">
+                    Invalid Bitcoin address.
+                  </div>
+                </div>
+                <div class="form-group amountControls">
+                  <label for="btcAmount">Amount</label>
+                  <div>
+                    <div class="amountContainer btc">
+                      <span class="currencyDesignator">BTC</span>
+                      <input type="number" class="form-control" id="btcAmount" data-currencytype="btc" placeholder="0.00"/>
+                    </div>
+                    <div class="amountContainer dollars">
+                      <span class="currencyDesignator">USD</span>
+                      <input type="number" class="form-control" id="dollarAmount" data-currencytype="usd" placeholder="0.00"/>
+                    </div>
+                  </div>
+                  <div class="validation failure notEnoughFunds">
+                    You do not have enough funds in your account.
+                  </div>
+                </div>
+              </form>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="sendButton">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+  - name: sendBitcoinSuccess
+    content: >
+      <div class="alert alert-success">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <strong>Sent!</strong> {{amount}} bitcoins have been sent to {{address}}
+      </div>
+  - name: sendBitcoinFailure
+    content: >
+      <div class="alert alert-danger">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <strong>Send failed.</strong> Something went wrong.
+      </div>
 

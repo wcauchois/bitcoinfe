@@ -9,6 +9,7 @@ import flask
 import json
 import requests
 import yaml
+from hashlib import sha256
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -24,9 +25,11 @@ REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 def index():
   templates = yaml.load(open('client/templates.yaml', 'r'))['templates']
   exchange_rate = get_exchange_rate()
+  send_address = request.args.get('sendaddress', False)
   return render_template('index.html',
     templates=templates,
-    exchangeRate=exchange_rate)
+    exchangeRate=exchange_rate,
+    sendAddress=send_address)
 
 @cache.cached(timeout=10, key_prefix='get_exchange_rate')
 def get_exchange_rate():
@@ -62,6 +65,39 @@ def get_exchange_rate_json(): # XXX
   json = r.json()
   rate = json['bitstamp']['rates']['last']
   return flask.jsonify({'rate': rate})
+
+@app.route('/send_bitcoin', methods=['POST'])
+def send_bitcoin_route():
+  address = request.form['address']
+  if not check_bitcoin_address(address):
+    return 'Bad Bitcoin address', 400
+  try:
+    amount = float(request.form['amount'])
+  except ValueError:
+    return 'Amount must be a number', 400
+  BtcClient.instance().sendtoaddress(address, amount)
+  return ''
+
+digits58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+# Bitcoin validation: http://rosettacode.org/wiki/Bitcoin/address_validation#Python
+def number_to_bytes(n, length):
+  return bytearray([(n >> i * 8) & 0xff for i in reversed(range(length))])
+ 
+def decode_base58(bc, length):
+    n = 0
+    for char in bc:
+        n = n * 58 + digits58.index(char)
+    return number_to_bytes(n, length)
+ 
+def check_bitcoin_address(bc):
+    bcbytes = decode_base58(bc, 25)
+    return bcbytes[-4:] == sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
+
+@app.route('/validate_bitcoin_address')
+def validate_bitcoin_address_json():
+  address = request.args.get('address', '')
+  return flask.jsonify({'result': check_bitcoin_address(address)})
 
 def read_config():
   parser = ConfigParser.RawConfigParser(DEFAULT_CONFIGS)

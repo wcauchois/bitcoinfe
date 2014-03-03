@@ -27,11 +27,12 @@
           <a class="navbar-brand" href="/">Bitcoin Wallet</a>
         </div>
         <ul class="nav navbar-nav">
-          <li><a href="#sendBitcoin">Send Bitcoin</a></li>
+          <li><a href="javascript:" id="sendBitcoinButton">Send Bitcoin</a></li>
         </ul>
       </div>
     </nav>
     <div class="container">
+      <div class="alerts"></div>
       <div class="row">
         <div class="col-md-12">
           <h3>Current Balance</h3>
@@ -97,7 +98,10 @@
     </script>
     <script src="static/app.js"></script>
     <script>
-      HomePage.init({exchangeRate: {{ exchangeRate }}});
+      HomePage.init({
+        exchangeRate: {{ exchangeRate }},
+        sendAddress: {% if sendAddress %}'{{sendAddress}}'{% else %}null{% endif %}
+      });
     </script>
   </body>
 </html>

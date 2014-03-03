@@ -6,6 +6,19 @@
 .negative {color: @negativeColor;}
 .amount {font-weight: bold;}
 
+.validation {
+  display: none;
+
+  &.failure {
+    color: #d9534f;
+    margin: 5px 0;
+    font-weight: bold;
+    font-size: 14px;
+  }
+}
+
+.validation.failure {display: none;}
+
 tr.hoverRow:hover, tr.hoverRow.simHover {
   background-color: #eee;
 }
@@ -20,6 +33,38 @@ tr.hoverRow:hover, tr.hoverRow.simHover {
     width: 300px;
     font-family: monospace;
     margin: 0 auto;
+  }
+}
+
+.sendBitcoinModal {
+  .amountControls {
+    .amountContainer {
+      display: inline-block;
+      position: relative;
+
+      &.dollars {margin-left: 5px;}
+
+      #btcAmount, #dollarAmount {
+        display: inline;
+        width: 150px;
+        font-size: 20px;
+        height: 40px;
+        padding-left: 44px;
+
+        @media (max-width: 768px) {width: 130px;}
+      }
+
+      .currencyDesignator {
+        position: absolute;
+        top: 7px;
+        background-color: #999;
+        color: white;
+        padding: 3px;
+        border-radius: 3px;
+        cursor: default;
+        left: 4px;
+      }
+    }
   }
 }
 
