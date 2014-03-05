@@ -61,11 +61,11 @@ var HomePage = Backbone.View.extend({
       walletService: this.walletService_,
       exchangeService: this.exchangeService_,
       sendAddress: address
-    }).render().on('send-success', _.bind(function(data) {
+    }).render().on('success', _.bind(function(data) {
       $('.alerts').append($(templates.sendBitcoinSuccess(
         _.pick(data, 'address', 'amount')
       )).alert());
-    }, this)).on('send-failure', _.bind(function() {
+    }, this)).on('failure', _.bind(function() {
       $('.alerts').append($(templates.sendBitcoinFailure()).alert());
     }, this));
   }
@@ -252,10 +252,10 @@ var SendBitcoinModal = Backbone.View.extend({
       };
       $.post('/send_bitcoin', data, _.bind(function() {
         this.$el.modal('hide');
-        this.trigger('send-success', data);
+        this.trigger('success', data);
       }, this)).fail(_.bind(function() {
         this.$el.modal('hide');
-        this.trigger('send-failure', data);
+        this.trigger('failure', data);
       }, this));
     }, this));
     this.validate();
