@@ -50,32 +50,29 @@ def get_bitcoin_info():
   return BtcClient.instance().getinfo()
 
 @app.route('/get_balance')
-def get_balance_json():
+def API_get_balance():
   info = get_bitcoin_info()
   return flask.jsonify({'balance': info['balance']})
 
 @app.route('/list_transactions')
 @cache.cached(timeout=5)
-def list_transactions_json():
+def API_list_transactions():
   tx_list = BtcClient.instance().listtransactions()
   tx_list.reverse() # Most recent TX at the top.
   return flask.jsonify({'transactions': tx_list})
 
 @app.route('/list_addresses')
 @cache.cached(timeout=5)
-def list_addresses_json():
+def API_list_addresses():
   addr_list = BtcClient.instance().listreceivedbyaddress(0, True)
   return flask.jsonify({'addresses': addr_list})
 
 @app.route('/get_exchange_rate')
-def get_exchange_rate_json(): # XXX
-  r = requests.get('https://api.bitcoinaverage.com/exchanges/USD')
-  json = r.json()
-  rate = json['bitstamp']['rates']['last']
-  return flask.jsonify({'rate': rate})
+def API_get_exchange_rate(): # XXX
+  return flask.jsonify({'rate': get_exchange_rate()})
 
 @app.route('/send_bitcoin', methods=['POST'])
-def send_bitcoin_route():
+def API_send_bitcoin():
   address = request.form['address']
   if not check_bitcoin_address(address):
     return 'Bad Bitcoin address', 400
@@ -103,7 +100,7 @@ def check_bitcoin_address(bc):
     return bcbytes[-4:] == sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
 
 @app.route('/validate_bitcoin_address')
-def validate_bitcoin_address_json():
+def API_validate_bitcoin_address():
   address = request.args.get('address', '')
   return flask.jsonify({'result': check_bitcoin_address(address)})
 
