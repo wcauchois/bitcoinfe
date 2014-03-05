@@ -10,6 +10,7 @@ import json
 import requests
 import yaml
 from hashlib import sha256
+import re
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -21,11 +22,18 @@ DEFAULT_CONFIGS = {
 }
 REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 
+btc_prefix_pattern = re.compile(r'^bitcoin:')
+def remove_bitcoin_prefix(s):
+  return btc_prefix_pattern.sub('', s)
+
 @app.route('/')
 def index():
   templates = yaml.load(open('client/templates.yaml', 'r'))['templates']
   exchange_rate = get_exchange_rate()
   send_address = request.args.get('sendaddress', False)
+  if send_address is not False:
+    send_address = remove_bitcoin_prefix(send_address)
+
   return render_template('index.html',
     templates=templates,
     exchangeRate=exchange_rate,

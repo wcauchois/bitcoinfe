@@ -122,6 +122,9 @@ templates:
                   <div class="validation failure notEnoughFunds">
                     You do not have enough funds in your account.
                   </div>
+                  <div class="validation failure zeroAmount">
+                    Please enter a non-zero amount.
+                  </div>
                 </div>
               </form>
             </div>

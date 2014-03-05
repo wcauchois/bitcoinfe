@@ -49,6 +49,11 @@ var HomePage = Backbone.View.extend({
     // Remove query parameters from the URL
     window.history.replaceState({}, 'state',
       window.location.href.replace(/\?.*/, ''));
+
+    if (navigator.registerProtocolHandler) {
+      navigator.registerProtocolHandler('bitcoin',
+        'http://' + window.location.host + '/?sendaddress=%s', 'Bitcoin Wallet');
+    }
   },
 
   openSendDialog_: function(address) {
@@ -112,7 +117,7 @@ _.extend(WalletService.prototype, {
     return this.balance_;
   },
 
-  getBalancePromise: function() {
+  toPromise: function() {
     return this.balancePromise_;
   }
 });
@@ -121,7 +126,7 @@ var BitcoinBalanceView = Backbone.View.extend({
   initialize: function(options) {
     this.exchangeService_ = options.exchangeService;
     this.walletService_ = options.walletService;
-    this.walletService_.getBalancePromise().done(_.bind(this.render, this));
+    this.walletService_.toPromise().done(_.bind(this.render, this));
   },
 
   render: function() {
@@ -174,7 +179,12 @@ var SendBitcoinModal = Backbone.View.extend({
     this.walletService_ = options.walletService;
     this.exchangeService_ = options.exchangeService;
     this.prefillAddress_ = options.sendAddress;
+
     this.validating_ = false;
+    this.validators_ = [
+      _.bind(this.validateFunds_, this),
+      _.bind(this.validateAddress_, this)
+    ];
   },
 
   decorate: function() {
@@ -194,7 +204,7 @@ var SendBitcoinModal = Backbone.View.extend({
     $([
       this.$btcAmount_.get(0),
       this.$dollarAmount_.get(0)
-    ]).keyup(_.bind(function(e) {
+    ]).on('keyup blur', _.bind(function(e) {
       var $target = $(e.target), currencyType = $target.data('currencytype');
       // Update the input field for the other currency.
       var amount = parseFloat($target.val()), converted;
@@ -263,17 +273,13 @@ var SendBitcoinModal = Backbone.View.extend({
     }
   },
 
-  maybeFinish_: function(result, failureEl) {
+  aggregateResults_: function(result, failedSelector) {
     if (!this.validating_) return;
     this.failed_ = this.failed_ || !result;
-    failureEl.toggle(!result);
+    this.$el.find(failedSelector).toggle(!result);
     this.completed_++;
-    if (this.completed_ === 2) {
-      if (this.failed_) {
-        this.trigger('validation-failure');
-      } else {
-        this.trigger('validation-success');
-      }
+    if (this.completed_ === this.validators_.length) {
+      this.trigger(this.failed_ ? 'validation-failure' : 'validation-success');
       _.delay(_.bind(function() { this.validating_ = false; }, this), 50);
     }
   },
@@ -284,14 +290,26 @@ var SendBitcoinModal = Backbone.View.extend({
     this.failed_ = false;
     this.completed_ = 0;
 
-    this.maybeFinish_(
-      this.getBitcoinAmount() <= this.walletService_.getBalance(),
-      this.$el.find('.notEnoughFunds'));
+    _.each(this.validators_, function(test) {
+      test(_.bind(this.aggregateResults_, this));
+    }, this);
+  },
 
+  validateFunds_: function(callback) {
+    this.walletService_.toPromise().done(_.bind(function() {
+      if (this.getBitcoinAmount() <= 0.0) {
+        callback(false, '.zeroAmount');
+      } else if (this.walletService_.getBalance() < this.getBitcoinAmount()) {
+        callback(false, '.notEnoughFunds');
+      } else callback(true);
+    }, this));
+  },
+
+  validateAddress_: function(callback) {
     $.getJSON('/validate_bitcoin_address', {
       address: this.getBitcoinAddress()
     }, _.bind(function(data) {
-      this.maybeFinish_(data.result, this.$el.find('.invalidAddress'));
+      callback(data.result, this.$el.find('.invalidAddress'));
     }, this));
   },
 
