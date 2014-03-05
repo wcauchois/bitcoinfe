@@ -54,6 +54,11 @@ def API_get_balance():
   info = get_bitcoin_info()
   return flask.jsonify({'balance': info['balance']})
 
+@app.route('/new_address')
+def API_new_address():
+  address = BtcClient.instance().getnewaddress()
+  return flask.jsonify({'address': address})
+
 @app.route('/list_transactions')
 @cache.cached(timeout=5)
 def API_list_transactions():

@@ -34,8 +34,8 @@ var HomePage = Backbone.View.extend({
     this.transactionListView_ = new TransactionListView({
       el: this.$el.find('.transactionListContainer')
     });
-    this.addressListView_ = new AddressListView({
-      el: this.$el.find('.addressListContainer')
+    this.addressSectionView = new AddressSectionView({
+      el: this.$el.find('.addressSection')
     });
 
     this.$el.find('#sendBitcoinButton').click(_.bind(function() {
@@ -322,8 +322,32 @@ var SendBitcoinModal = Backbone.View.extend({
   }
 });
 
+var AddressSectionView = Backbone.View.extend({
+  initialize: function(options) {
+    this.addressListView_ = new AddressListView({
+      el: this.$el.find('.addressListContainer')
+    });
+    this.$getNewAddressButton_ = this.$el.find('.getNewAddressButton');
+    this.$getNewAddressButton_.click(_.bind(this.getNewAddress_, this));
+  },
+
+  getNewAddress_: function() {
+    this.$getNewAddressButton_.prop('disabled', true);
+    $.getJSON('/new_address', _.bind(function() {
+      _.delay(_.bind(function() {
+        this.$getNewAddressButton_.prop('disabled', false);
+        this.addressListView_.refresh();
+      }, this), 150);
+    }, this));
+  }
+});
+
 var AddressListView = Backbone.View.extend({
   initialize: function(options) {
+    this.refresh();
+  },
+
+  refresh: function() {
     $.getJSON('/list_addresses', _.bind(function(data) {
       this.addresses_ = data.addresses;
       this.render();
