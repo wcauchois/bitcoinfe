@@ -46,7 +46,6 @@ templates:
           <tr>
             <th>Address</th>
             <th>Balance</th>
-            <th class="hidden-xs">Transaction IDs</th>
           </tr>
           {{#addresses}}
             <tr>
@@ -59,11 +58,6 @@ templates:
                 </span>
               </td>
               <td><span class="amount positive">{{amount}}</span></td>
-              <td class="hidden-xs">
-                {{#txlist}}
-                  <a href="https://blockchain.info/tx/{{id}}" class="transactionLink" target="_blank">{{id}}</a><br/>
-                {{/txlist}}
-              </td>
             </tr>
           {{/addresses}}
         </table>
