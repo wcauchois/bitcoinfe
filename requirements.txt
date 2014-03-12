@@ -1,4 +1,11 @@
-flask
--e git://github.com/jgarzik/python-bitcoinrpc.git#egg=python-bitcoinrpc
-Flask-Cache
-requests
+Flask==0.10.1
+Flask-Cache==0.12
+Jinja2==2.7.2
+MarkupSafe==0.18
+PyYAML==3.10
+Werkzeug==0.9.4
+argparse==1.2.1
+itsdangerous==0.23
+-e git://github.com/jgarzik/python-bitcoinrpc.git@e48474322de165212c5aa29574297e78b09df8d6#egg=python_bitcoinrpc-origin/master
+requests==2.2.1
+wsgiref==0.1.2
