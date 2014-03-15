@@ -1,5 +1,7 @@
 import os, math
 from collections import namedtuple
+from cStringIO import StringIO
+import ConfigParser
 
 # http://stackoverflow.com/a/7285509
 _ntuple_diskusage = namedtuple('diskusage', 'total used free')
@@ -23,4 +25,20 @@ def format_bytes(bites, precision=2):
   power = min(power, len(_storage_units) - 1)
   bites /= math.pow(1024, power)
   return (('%.' + str(precision) + 'f') % bites).rstrip('0.') + ' ' + _storage_units[int(power)]
+
+def read_config(path='~/.bitcoinfe.conf', default={}, required=[]):
+  parser = ConfigParser.RawConfigParser(DEFAULT_CONFIGS)
+  config_buf = StringIO()
+  # We have to do some trickiness and write a bogus [DEFAULT] section header
+  # to our buffer since Python's ConfigParser expects section headers.
+  config_buf.write('[DEFAULT]\n')
+  with open(os.path.expanduser(path)) as config_file:
+    config_buf.write(config_file.read())
+  config_buf.seek(0)
+  parser.readfp(config_buf)
+  items = parser.items('DEFAULT')
+  missing_keys = list(set(required) - set(i[0] for i in items))
+  if len(missing_keys) > 0:
+    raise RuntimeException, 'Missing the following required config options: %s' % ', '.join(missing_keys)
+  return dict(items)
 
