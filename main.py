@@ -8,7 +8,7 @@ import json
 import requests
 import yaml
 import time
-import util
+from helpers import *
 from hashlib import sha256
 import re
 
@@ -204,7 +204,7 @@ class BtcClient(AuthServiceProxy):
 @app.before_first_request
 def initialize():
   global remote_service
-  app.config.update(util.read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
+  app.config.update(read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
   BtcClient.instance() # Initiate the bitcoin client
   remote_service = JsonServiceBreaker('%s:%s' % (app.config['rpcconnect'], 3270))
 

@@ -1,25 +1,27 @@
-"""Helper service to run on the box that's actually running Bitcoin."""
+"""Helper service to run on the box that's actually running Bitcoin.
+
+Note that the only third-party requirement for this script is Flask."""
 import flask
-import util
+from helpers import *
 from flask import Flask
 
 app = Flask(__name__)
 
 @app.route('/storage_info')
 def API_storage_info():
-  usage = util.disk_usage(app.config['datadir'])
+  usage = disk_usage(app.config['datadir'])
   return flask.jsonify({
     'total': usage.total,
     'free': usage.free,
     'used': usage.used,
-    'formattedTotal': util.format_bytes(usage.total),
-    'formattedFree': util.format_bytes(usage.free),
-    'formattedUsed': util.format_bytes(usage.used),
+    'formattedTotal': format_bytes(usage.total),
+    'formattedFree': format_bytes(usage.free),
+    'formattedUsed': format_bytes(usage.used),
   })
 
 @app.before_first_request
 def initialize():
-  app.config.update(util.read_config(defaults={'datadir': '/'}))
+  app.config.update(read_config(defaults={'datadir': '/'}))
 
 if __name__ == '__main__':
   app.debug = True
