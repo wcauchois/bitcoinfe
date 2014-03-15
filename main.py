@@ -3,11 +3,13 @@ from bitcoinrpc.authproxy import AuthServiceProxy
 from decimal import Decimal
 from flask import Flask, render_template, request, g
 from flask.ext.cache import Cache
+from datetime import datetime
 import flask
 import json
 import requests
 import yaml
 import time
+import sqlite3
 from helpers import *
 from hashlib import sha256
 import re
@@ -137,6 +139,39 @@ def API_send_bitcoin():
     return 'Amount must be a number', 400
   BtcClient.instance().sendtoaddress(address, amount)
   return ''
+
+@app.route('/record_stats', methods=['POST'])
+def API_record_stats():
+  storage_info = remote_service.get('/storage_info')
+  conn = sqlite3.connect('stats.db')
+  c = conn.cursor()
+  c.execute('insert into stats values(?,?,?,?)',
+    (time_seconds(),
+    storage_info[u'total'],
+    storage_info[u'used'],
+    storage_info[u'free']))
+  conn.commit()
+  c.close()
+  conn.close()
+  return flask.jsonify({'result': 'OK'})
+
+@app.route('/time_series')
+def API_time_series():
+  length = parse_interval(request.args.get('length', '60d'))
+  after = time_seconds() - length
+  conn = sqlite3.connect('stats.db')
+  rows = conn.execute('select * from stats where ts > ?', (after,))
+  data = []
+  for (ts, disk_total, disk_used, disk_free) in rows:
+    point = {}
+    point['ts'] = ts
+    point['dt'] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
+    point['disk_total'] = format_bytes(disk_total)
+    point['disk_used'] = format_bytes(disk_used)
+    point['disk_free'] = format_bytes(disk_free)
+    data.append(point)
+  conn.close()
+  return flask.jsonify({'data': data})
 
 @app.route('/storage_info')
 def API_storage_info():

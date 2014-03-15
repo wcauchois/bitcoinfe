@@ -1,5 +1,6 @@
 import os, math
 from collections import namedtuple
+import re
 from cStringIO import StringIO
 import ConfigParser
 
@@ -41,4 +42,25 @@ def read_config(path='~/.bitcoinfe.conf', defaults={}, required=[]):
   if len(missing_keys) > 0:
     raise RuntimeException, 'Missing the following required config options: %s' % ', '.join(missing_keys)
   return dict(items)
+
+INTERVAL_RE = re.compile('(\d+[msdh])')
+
+def parse_interval(i):
+  """Parses a time duration like '1d8h' (1 day, 8 hours), and converts it to seconds."""
+  parts = INTERVAL_RE.findall(i)
+  if len(parts) > 0:
+    total = 0
+    for p in parts:
+      n = int(''.join(c for c in p if c.isdigit()))
+      if p.endswith('d'):
+        total += n * 86400L
+      elif p.endswith('h'):
+        total += n * 3600L
+      elif p.endswith('m'):
+        total += n * 60L
+      elif p.endswith('s'):
+        total += long(n)
+    return total
+  else:
+    return TypeError, 'Invalid interval'
 
