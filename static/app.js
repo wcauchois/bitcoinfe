@@ -54,6 +54,12 @@ var HomePage = Backbone.View.extend({
       navigator.registerProtocolHandler('bitcoin',
         'http://' + window.location.host + '/?sendaddress=%s', 'Bitcoin Wallet');
     }
+
+    $.getJSON('/storage_info', _.bind(function(data) {
+      var $storageInfo = $(templates.storageInfo(data));
+      $storageInfo.find('span').tooltip();
+      this.$el.find('#storageInfo').empty().append($storageInfo);
+    }, this));
   },
 
   openSendDialog_: function(address) {

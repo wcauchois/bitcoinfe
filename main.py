@@ -138,6 +138,10 @@ def API_send_bitcoin():
   BtcClient.instance().sendtoaddress(address, amount)
   return ''
 
+@app.route('/storage_info')
+def API_storage_info():
+  return flask.jsonify(remote_service.get('/storage_info'))
+
 digits58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 # Bitcoin validation: http://rosettacode.org/wiki/Bitcoin/address_validation#Python
@@ -199,8 +203,10 @@ class BtcClient(AuthServiceProxy):
 
 @app.before_first_request
 def initialize():
+  global remote_service
   app.config.update(util.read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
   BtcClient.instance() # Initiate the bitcoin client
+  remote_service = JsonServiceBreaker('%s:%s' % (app.config['rpcconnect'], 3270))
 
 if __name__ == '__main__':
   app.debug = True

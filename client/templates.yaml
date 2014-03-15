@@ -141,4 +141,11 @@ templates:
         <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
         <strong>Send failed.</strong> Something went wrong.
       </div>
+  - name: storageInfo
+    content: >
+      {{#total}}
+        <a href="javascript:">
+          <span data-toggle="tooltip" data-placement="bottom" title="{{formattedFree}} Available">{{formattedUsed}} / {{formattedTotal}}</span>
+        </a>
+      {{/total}}
 
