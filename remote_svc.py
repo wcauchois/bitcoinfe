@@ -19,8 +19,9 @@ def API_storage_info():
 
 @app.before_first_request
 def initialize():
-  app.config.update(util.read_config(default={'datadir': '~/.bitcoin'}))
+  app.config.update(util.read_config(defaults={'datadir': '/'}))
 
 if __name__ == '__main__':
+  app.debug = True
   app.run(host='0.0.0.0', port=3270)
 

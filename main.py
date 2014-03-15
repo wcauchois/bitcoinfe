@@ -147,7 +147,7 @@ class BtcClient(AuthServiceProxy):
 
 @app.before_first_request
 def initialize():
-  app.config.update(util.read_config(default=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
+  app.config.update(util.read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
   BtcClient.instance() # Initiate the bitcoin client
 
 if __name__ == '__main__':

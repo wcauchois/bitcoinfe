@@ -26,8 +26,8 @@ def format_bytes(bites, precision=2):
   bites /= math.pow(1024, power)
   return (('%.' + str(precision) + 'f') % bites).rstrip('0.') + ' ' + _storage_units[int(power)]
 
-def read_config(path='~/.bitcoinfe.conf', default={}, required=[]):
-  parser = ConfigParser.RawConfigParser(DEFAULT_CONFIGS)
+def read_config(path='~/.bitcoinfe.conf', defaults={}, required=[]):
+  parser = ConfigParser.RawConfigParser(defaults)
   config_buf = StringIO()
   # We have to do some trickiness and write a bogus [DEFAULT] section header
   # to our buffer since Python's ConfigParser expects section headers.
