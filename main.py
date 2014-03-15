@@ -143,13 +143,15 @@ def API_send_bitcoin():
 @app.route('/record_stats', methods=['POST'])
 def API_record_stats():
   storage_info = remote_service.get('/storage_info')
+  bitcoin_info = get_bitcoin_info()
   conn = sqlite3.connect('stats.db')
   c = conn.cursor()
-  c.execute('insert into stats values(?,?,?,?)',
+  c.execute('insert into stats values(?,?,?,?,?)',
     (time_seconds(),
     storage_info[u'total'],
     storage_info[u'used'],
-    storage_info[u'free']))
+    storage_info[u'free'],
+    bitcoin_info['blocks']))
   conn.commit()
   c.close()
   conn.close()
@@ -162,13 +164,14 @@ def API_time_series():
   conn = sqlite3.connect('stats.db')
   rows = conn.execute('select * from stats where ts > ?', (after,))
   data = []
-  for (ts, disk_total, disk_used, disk_free) in rows:
+  for (ts, disk_total, disk_used, disk_free, blocks) in rows:
     point = {}
     point['ts'] = ts
     point['dt'] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
     point['disk_total'] = format_bytes(disk_total)
     point['disk_used'] = format_bytes(disk_used)
     point['disk_free'] = format_bytes(disk_free)
+    point['blocks'] = blocks
     data.append(point)
   conn.close()
   return flask.jsonify({'data': data})
