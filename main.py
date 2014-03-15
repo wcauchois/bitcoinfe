@@ -7,6 +7,8 @@ import flask
 import json
 import requests
 import yaml
+import time
+import util
 from hashlib import sha256
 import re
 
@@ -19,6 +21,56 @@ DEFAULT_CONFIGS = {
   'rpcconnect': '127.0.0.1'
 }
 REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
+
+def time_seconds():
+  return int(time.time())
+
+class CircuitBreakerException(Exception):
+  pass
+
+class CircuitBreaker(object):
+  BACKOFF_TIME = 60 # Wait 1 minute before trying again
+
+  def __init__(self):
+    self.down = False
+    self.down_timestamp = None
+
+  def _get(self):
+    raise NotImplementedError
+
+  def _default(self):
+    return None
+
+  def get(self, *args, **kwargs):
+    if not self.down or (time_seconds() - self.down_timestamp) > self.BACKOFF_TIME:
+      try:
+        result = self._get(*args, **kwargs)
+        self.down = False
+        return result
+      except CircuitBreakerException:
+        self.down = True
+        self.down_timestamp = time_seconds()
+        return self._default(*args, **kwargs)
+    else:
+      # We are down and we haven't waited long enough.
+      return self._default(*args, **kwargs)
+
+class JsonServiceBreaker(CircuitBreaker):
+  REQUEST_TIMEOUT = 0.2
+
+  def __init__(self, host):
+    super(JsonServiceBreaker, self).__init__()
+    self.basepath = 'http://%s' % host
+
+  def _get(self, path):
+    try:
+      r = requests.get(self.basepath + path, timeout=self.REQUEST_TIMEOUT)
+    except requests.exceptions.RequestException:
+      raise CircuitBreakerException
+    return r.json()
+
+  def _default(self, *args):
+    return {}
 
 btc_prefix_pattern = re.compile(r'^bitcoin:')
 def remove_bitcoin_prefix(s):
