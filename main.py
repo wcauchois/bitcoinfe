@@ -82,6 +82,7 @@ def remove_bitcoin_prefix(s):
 def index():
   templates = yaml.load(open('client/templates.yaml', 'r'))['templates']
   exchange_rate = get_exchange_rate()
+  bitcoin_info = get_bitcoin_info()
   send_address = request.args.get('sendaddress', False)
   if send_address is not False:
     send_address = remove_bitcoin_prefix(send_address)
@@ -89,7 +90,8 @@ def index():
   return render_template('index.html',
     templates=templates,
     exchangeRate=exchange_rate,
-    sendAddress=send_address)
+    sendAddress=send_address,
+    bitcoinInfo=bitcoin_info)
 
 @cache.cached(timeout=10, key_prefix='get_exchange_rate')
 def get_exchange_rate():

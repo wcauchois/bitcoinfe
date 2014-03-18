@@ -7,6 +7,7 @@
 
     <script src="//code.jquery.com/jquery-1.10.2.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script src="static/3rdparty/mustache.min.js"></script>
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
@@ -26,16 +27,14 @@
         <div class="navbar-header">
           <a class="navbar-brand" href="/">Bitcoin Wallet</a>
         </div>
-        <!--
-        <ul class="nav navbar-nav">
-          <li><button class="btn btn-default" id="sendBitcoinButton">Send Bitcoin</button></li>
-        </ul>
-        -->
         <form class="navbar-form navbar-left">
           <button class="btn btn-default" id="sendBitcoinButton" onclick="return false">Send Bitcoin</button>
         </form>
         <ul class="nav navbar-nav">
           <li id="storageInfo"></li>
+          <li>
+            <a href="javascript:" id="bitcoinBlocksLink">{{ bitcoinInfo.blocks }} Blocks</a>
+          </li>
         </ul>
       </div>
     </nav>
@@ -70,21 +69,6 @@
         </div>
       </div>
 
-      {#
-      <div class="row" id="sendBitcoin">
-        <div class="col-md-4">
-          <h3>Send Bitcoin</h3>
-          <form>
-            <div class="form-group">
-              <input type="text" class="form-control" placeholder="To Address"/>
-            </div>
-            <input type="text" class="form-control" placeholder="Amount"/>
-            <button type="button" class="btn btn-default">Get New Address</button>
-          </form>
-        </div>
-      </div>
-      #}
-
       <div style="height: 300px;"></div>
     </div>
 
@@ -105,7 +89,8 @@
     <script>
       HomePage.init({
         exchangeRate: {{ exchangeRate }},
-        sendAddress: {% if sendAddress %}'{{sendAddress}}'{% else %}null{% endif %}
+        sendAddress: {% if sendAddress %}'{{sendAddress}}'{% else %}null{% endif %},
+        bitcoinInfo: {{ bitcoinInfo|tojson|safe }}
       });
     </script>
   </body>

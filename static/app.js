@@ -1,4 +1,6 @@
 
+google.load('visualization', '1.0', {'packages': ['corechart']});
+
 var formatDate = (function(monthNames) {
   // Jan 21, 2014 [10:11 PM]
   return function(date) {
@@ -24,13 +26,13 @@ var HomePage = Backbone.View.extend({
     this.exchangeService_ = new ExchangeService({
       exchangeRate: options.exchangeRate
     });
-    this.walletService_ = new WalletService();
+    this.bitcoinInfo_ = options.bitcoinInfo;
 
     this.bitcoinBalanceView_ = new BitcoinBalanceView({
       el: this.$el.find('.balanceContainer'),
-      walletService: this.walletService_,
+      currentBalance: this.bitcoinInfo_.balance,
       exchangeService: this.exchangeService_
-    });
+    }).render();
     this.transactionListView_ = new TransactionListView({
       el: this.$el.find('.transactionListContainer')
     });
@@ -41,6 +43,10 @@ var HomePage = Backbone.View.extend({
     this.$el.find('#sendBitcoinButton').click(_.bind(function() {
       this.openSendDialog_();
     }, this));
+
+    this.$el.find('#bitcoinBlocksLink').click(function() {
+      new ChartDialog().open();
+    });
 
     if (options.sendAddress) {
       this.openSendDialog_(options.sendAddress);
@@ -64,16 +70,18 @@ var HomePage = Backbone.View.extend({
 
   openSendDialog_: function(address) {
     new SendBitcoinModal({
-      walletService: this.walletService_,
+      currentBalance: this.bitcoinInfo_.balance,
       exchangeService: this.exchangeService_,
       sendAddress: address
-    }).render().on('success', _.bind(function(data) {
-      $('.alerts').append($(templates.sendBitcoinSuccess(
-        _.pick(data, 'address', 'amount')
-      )).alert());
-    }, this)).on('failure', _.bind(function() {
-      $('.alerts').append($(templates.sendBitcoinFailure()).alert());
-    }, this));
+    }).open().on('success', function(data) {
+      this.showAlert(templates.sendBitcoinSuccess(data));
+    }, this).on('failure', function() {
+      this.showAlert(templates.sendBitcoinFailure());
+    }, this);
+  },
+
+  showAlert: function(content) {
+    $('.alerts').append($(content).alert());
   }
 }, {
   init: function(options) {
@@ -107,36 +115,14 @@ _.extend(ExchangeService.prototype, {
   }
 });
 
-var WalletService = function() {
-  this.initialize.apply(this, arguments);
-};
-
-_.extend(WalletService.prototype, {
-  initialize: function() {
-    this.balancePromise_ = $.getJSON('/get_balance');
-    this.balancePromise_.done(_.bind(function(data) {
-      this.balance_ = data.balance;
-    }, this));
-  },
-
-  getBalance: function() {
-    return this.balance_;
-  },
-
-  toPromise: function() {
-    return this.balancePromise_;
-  }
-});
-
 var BitcoinBalanceView = Backbone.View.extend({
   initialize: function(options) {
     this.exchangeService_ = options.exchangeService;
-    this.walletService_ = options.walletService;
-    this.walletService_.toPromise().done(_.bind(this.render, this));
+    this.currentBalance_ = options.currentBalance;
   },
 
   render: function() {
-    var balance = this.walletService_.getBalance()
+    var balance = this.currentBalance_;
     this.$el.empty().append(templates.bitcoinBalance({
       bitcoins: balance,
       dollars: +this.exchangeService_.btcToDollars(balance).toFixed(6),
@@ -180,9 +166,65 @@ var TransactionListView = Backbone.View.extend({
   }
 });
 
-var SendBitcoinModal = Backbone.View.extend({
+var DialogView = Backbone.View.extend({
+  renderTemplate_: function() {
+    throw new Error("Abstract method");
+  },
+
+  decorate: function() { return this; },
+
+  // Just an alias for render()
+  open: function() { return this.render(); },
+
+  render: function() {
+    this.setElement($(this.renderTemplate_()));
+    this.$el.modal();
+    // Remove from DOM when the modal is closed
+    this.$el.on('hidden.bs.modal', _.bind(this.remove, this));
+    return this.decorate();
+  }
+});
+
+var ChartDialog = DialogView.extend({
   initialize: function(options) {
-    this.walletService_ = options.walletService;
+    ChartDialog.__super__.initialize.call(this, options);
+    $.getJSON('/time_series', _.bind(this.receiveData_, this));
+  },
+
+  renderTemplate_: function() {
+    return templates.chartDialog();
+  },
+
+  receiveData_: function(response) {
+    var data = new google.visualization.DataTable();
+    data.addColumn('datetime', 'Date');
+    data.addColumn('number', 'Blockchain Size');
+    data.addRows(_.map(response.data, function(point) {
+      return [
+        new Date(point.ts * 1000),
+        point.blocks
+      ];
+    }));
+
+    var chartOptions = {
+      title: 'Blockchain Size',
+      fontName: 'Sans-Serif',
+      fontSize: 14,
+      legend: {position: 'none'},
+      chartArea:{left: 100, top: 50, width: 700, height: 300},
+      width: 800,
+      height: 400,
+      hAxis: {slantedText: true}
+    };
+
+    var chart = new google.visualization.LineChart(this.$el.find('.chart').get(0));
+    chart.draw(data, chartOptions);
+  }
+});
+
+var SendBitcoinModal = DialogView.extend({
+  initialize: function(options) {
+    this.currentBalance_ = options.currentBalance;
     this.exchangeService_ = options.exchangeService;
     this.prefillAddress_ = options.sendAddress;
 
@@ -231,13 +273,13 @@ var SendBitcoinModal = Backbone.View.extend({
       $formGroup.find('.validation.failure').hide();
     }).blur(_.bind(this.validate, this));
 
-    this.on('validation-failure', _.bind(function() {
+    this.on('validation-failure', function() {
       this.$sendButton_.prop('disabled', true);
-    }, this));
-    this.on('validation-success', _.bind(function() {
+    }, this);
+    this.on('validation-success', function() {
       this.$sendButton_.prop('disabled', false);
       this.$el.find('.validation.failure').hide();
-    }, this));
+    }, this);
 
     this.$sendButton_.click(_.bind(this.trySend_, this));
 
@@ -251,20 +293,25 @@ var SendBitcoinModal = Backbone.View.extend({
 
   trySend_: function() {
     this.$sendButton_.prop('disabled', true); // Disable the button while we submit.
-    this.once('validation-success', _.bind(function() {
-      var data = {
-        address: this.$bitcoinAddress_.val(),
-        amount: this.$btcAmount_.val()
-      };
-      $.post('/send_bitcoin', data, _.bind(function() {
-        this.$el.modal('hide');
-        this.trigger('success', data);
-      }, this)).fail(_.bind(function() {
-        this.$el.modal('hide');
-        this.trigger('failure', data);
-      }, this));
-    }, this));
+    this.once('validation-success', this.reallySend_, this);
+    this.once('validation-failure', function() {
+      this.off('validation-success', this.reallySend_);
+    }, this);
     this.validate();
+  },
+
+  reallySend_: function() {
+    var data = {
+      address: this.$bitcoinAddress_.val(),
+      amount: this.$btcAmount_.val()
+    };
+    $.post('/send_bitcoin', data, _.bind(function() {
+      this.$el.modal('hide');
+      this.trigger('success', data);
+    }, this)).fail(_.bind(function() {
+      this.$el.modal('hide');
+      this.trigger('failure', data);
+    }, this));
   },
 
   getBitcoinAddress: function() {
@@ -279,10 +326,10 @@ var SendBitcoinModal = Backbone.View.extend({
     }
   },
 
-  aggregateResults_: function(result, failedSelector) {
+  aggregateResults_: function(result, failureMessageSelector) {
     if (!this.validating_) return;
     this.failed_ = this.failed_ || !result;
-    this.$el.find(failedSelector).toggle(!result);
+    this.$el.find(failureMessageSelector).toggle(!result);
     this.completed_++;
     if (this.completed_ === this.validators_.length) {
       this.trigger(this.failed_ ? 'validation-failure' : 'validation-success');
@@ -302,29 +349,23 @@ var SendBitcoinModal = Backbone.View.extend({
   },
 
   validateFunds_: function(callback) {
-    this.walletService_.toPromise().done(_.bind(function() {
-      if (this.getBitcoinAmount() <= 0.0) {
-        callback(false, '.zeroAmount');
-      } else if (this.walletService_.getBalance() < this.getBitcoinAmount()) {
-        callback(false, '.notEnoughFunds');
-      } else callback(true);
-    }, this));
+    if (this.getBitcoinAmount() <= 0.0) {
+      callback(false, '.zeroAmount');
+    } else if (this.currentBalance_ < this.getBitcoinAmount()) {
+      callback(false, '.notEnoughFunds');
+    } else callback(true);
   },
 
   validateAddress_: function(callback) {
     $.getJSON('/validate_bitcoin_address', {
       address: this.getBitcoinAddress()
     }, _.bind(function(data) {
-      callback(data.result, this.$el.find('.invalidAddress'));
+      callback(data.result, '.invalidAddress');
     }, this));
   },
 
-  render: function() {
-    this.setElement($(templates.sendBitcoin()));
-    this.$el.modal();
-    // Remove from DOM when the modal is closed
-    this.$el.on('hidden.bs.modal', _.bind(this.remove, this));
-    return this.decorate();
+  renderTemplate_: function() {
+    return templates.sendBitcoin();
   }
 });
 
