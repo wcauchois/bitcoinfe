@@ -24,6 +24,10 @@ DEFAULT_CONFIGS = {
 }
 REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 
+@app.template_filter('format_number')
+def format_number(value):
+  return "{:,d}".format(value)
+
 def time_seconds():
   return int(time.time())
 
@@ -170,9 +174,9 @@ def API_time_series():
     point = {}
     point['ts'] = ts
     point['dt'] = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M')
-    point['disk_total'] = format_bytes(disk_total)
-    point['disk_used'] = format_bytes(disk_used)
-    point['disk_free'] = format_bytes(disk_free)
+    point['disk_total'] = disk_total
+    point['disk_used'] = disk_used
+    point['disk_free'] = disk_free
     point['blocks'] = blocks
     data.append(point)
   conn.close()

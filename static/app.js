@@ -15,6 +15,15 @@ var formatDate = (function(monthNames) {
   };
 })(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'June', 'Aug', 'Sept', 'Oct', 'Nov', 'Dec']);
 
+// http://stackoverflow.com/a/18650828
+function bytesToSize(bytes) {
+   var sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+   if (bytes === 0) return '0 Bytes';
+   var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+   var n = bytes / Math.pow(1024, i);
+   return '' + (+n.toFixed(3)) + ' ' + sizes[i];
+}
+
 // http://goqr.me/api/
 function getQRCodeURI(width, height, data) {
   return 'https://api.qrserver.com/v1/create-qr-code/?size=' +
