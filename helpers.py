@@ -1,5 +1,8 @@
 import os, math
 from collections import namedtuple
+from decimal import Decimal
+from hashlib import sha256
+import time
 import re
 from cStringIO import StringIO
 import ConfigParser
@@ -63,4 +66,41 @@ def parse_interval(i):
     return total
   else:
     return TypeError, 'Invalid interval'
+
+def time_seconds():
+  return int(time.time())
+
+_btc_prefix_pattern = re.compile(r'^bitcoin:')
+def remove_bitcoin_prefix(s):
+  return _btc_prefix_pattern.sub('', s)
+
+# Bitcoin validation: http://rosettacode.org/wiki/Bitcoin/address_validation#Python
+_digits58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+def number_to_bytes(n, length):
+  return bytearray([(n >> i * 8) & 0xff for i in reversed(range(length))])
+ 
+def decode_base58(bc, length):
+    n = 0
+    for char in bc:
+        n = n * 58 + _digits58.index(char)
+    return number_to_bytes(n, length)
+ 
+def check_bitcoin_address(bc):
+    bcbytes = decode_base58(bc, 25)
+    return bcbytes[-4:] == sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
+
+def cleanup_json(json_in):
+  if isinstance(json_in, dict):
+    json_out = dict()
+    for (key, val) in json_in.iteritems():
+      json_out[key] = cleanup_json(val)
+    return json_out
+  elif isinstance(json_in, list):
+    return map(cleanup_json, json_in)
+  elif isinstance(json_in, Decimal):
+    # flask.jsonify chokes on instances of Decimal.
+    return float(json_in)
+  else:
+    return json_in
 

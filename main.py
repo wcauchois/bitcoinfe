@@ -1,6 +1,5 @@
 import os, sys
 from bitcoinrpc.authproxy import AuthServiceProxy
-from decimal import Decimal
 from flask import Flask, render_template, request, g
 from flask.ext.cache import Cache
 from datetime import datetime
@@ -8,11 +7,9 @@ import flask
 import json
 import requests
 import yaml
-import time
 import logging
 import sqlite3
 from helpers import *
-from hashlib import sha256
 import re
 from json_service import JsonService
 
@@ -29,13 +26,6 @@ REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 @app.template_filter('format_number')
 def format_number(value):
   return "{:,d}".format(value)
-
-def time_seconds():
-  return int(time.time())
-
-btc_prefix_pattern = re.compile(r'^bitcoin:')
-def remove_bitcoin_prefix(s):
-  return btc_prefix_pattern.sub('', s)
 
 @app.route('/')
 def index():
@@ -103,7 +93,7 @@ def API_send_bitcoin():
 
 @app.route('/record_stats', methods=['POST'])
 def API_record_stats():
-  storage_info = remote_service.get('/storage_info')
+  storage_info = remote_service.get('/storage_info', timeout=5)
   bitcoin_info = get_bitcoin_info()
   conn = sqlite3.connect('stats.db')
   c = conn.cursor()
@@ -141,22 +131,6 @@ def API_time_series():
 def API_storage_info():
   return flask.jsonify(remote_service.get('/storage_info'))
 
-digits58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-
-# Bitcoin validation: http://rosettacode.org/wiki/Bitcoin/address_validation#Python
-def number_to_bytes(n, length):
-  return bytearray([(n >> i * 8) & 0xff for i in reversed(range(length))])
- 
-def decode_base58(bc, length):
-    n = 0
-    for char in bc:
-        n = n * 58 + digits58.index(char)
-    return number_to_bytes(n, length)
- 
-def check_bitcoin_address(bc):
-    bcbytes = decode_base58(bc, 25)
-    return bcbytes[-4:] == sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
-
 @app.route('/validate_bitcoin_address')
 def API_validate_bitcoin_address():
   address = request.args.get('address', '')
@@ -171,27 +145,15 @@ class BtcClient(AuthServiceProxy):
       config['rpcport']
     )
 
-  def cleanup_json(self, json_in):
-    if isinstance(json_in, dict):
-      json_out = dict()
-      for (key, val) in json_in.iteritems():
-        json_out[key] = self.cleanup_json(val)
-      return json_out
-    elif isinstance(json_in, list):
-      return map(self.cleanup_json, json_in)
-    elif isinstance(json_in, Decimal):
-      # flask.jsonify chokes on instances of Decimal.
-      return float(json_in)
-    else:
-      return json_in
-
   def __init__(self, config):
     super(BtcClient, self).__init__(self.build_service_url(config))
 
   def __getattr__(self, key):
     oldfunc = super(BtcClient, self).__getattr__(key)
     def func(*args, **kwargs):
-      return self.cleanup_json(oldfunc(*args, **kwargs))
+      readable_args = ' '.join(map(str, args))
+      logging.debug('Invoking Bitcoin RPC: %s %s' % (key, readable_args))
+      return cleanup_json(oldfunc(*args, **kwargs))
     return func
 
 @app.before_first_request

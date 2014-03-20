@@ -1,6 +1,7 @@
 import requests
 import logging
 import json
+from helpers import *
 
 class CircuitBreakerException(Exception):
   pass
@@ -33,15 +34,15 @@ class CircuitBreaker(object):
       return self._default(*args, **kwargs)
 
 class JsonService(CircuitBreaker):
-  REQUEST_TIMEOUT = 0.2
+  REQUEST_TIMEOUT = 0.5
 
   def __init__(self, host):
     super(JsonService, self).__init__()
     self.basepath = 'http://%s' % host
 
-  def _get(self, path):
+  def _get(self, path, timeout=None):
     try:
-      r = requests.get(self.basepath + path, timeout=self.REQUEST_TIMEOUT)
+      r = requests.get(self.basepath + path, timeout=(timeout or self.REQUEST_TIMEOUT))
     except requests.exceptions.RequestException:
       raise CircuitBreakerException
     result_json = r.json()
