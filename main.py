@@ -60,7 +60,7 @@ def get_exchange_rate():
 
 @cache.cached(timeout=3, key_prefix='get_bitcoin_info')
 def get_bitcoin_info():
-  return BtcClient.instance().getinfo()
+  return btc_client.getinfo()
 
 @app.route('/get_balance')
 def API_get_balance():
@@ -69,20 +69,20 @@ def API_get_balance():
 
 @app.route('/new_address')
 def API_new_address():
-  address = BtcClient.instance().getnewaddress()
+  address = btc_client.getnewaddress()
   return flask.jsonify({'address': address})
 
 @app.route('/list_transactions')
 @cache.cached(timeout=5)
 def API_list_transactions():
-  tx_list = BtcClient.instance().listtransactions()
+  tx_list = btc_client.listtransactions()
   tx_list.reverse() # Most recent TX at the top.
   return flask.jsonify({'transactions': tx_list})
 
 @app.route('/list_addresses')
 @cache.cached(timeout=5)
 def API_list_addresses():
-  addr_list = BtcClient.instance().listreceivedbyaddress(0, True)
+  addr_list = btc_client.listreceivedbyaddress(0, True)
   return flask.jsonify({'addresses': addr_list})
 
 @app.route('/get_exchange_rate')
@@ -98,7 +98,7 @@ def API_send_bitcoin():
     amount = float(request.form['amount'])
   except ValueError:
     return 'Amount must be a number', 400
-  BtcClient.instance().sendtoaddress(address, amount)
+  btc_client.sendtoaddress(address, amount)
   return ''
 
 @app.route('/record_stats', methods=['POST'])
@@ -194,18 +194,12 @@ class BtcClient(AuthServiceProxy):
       return self.cleanup_json(oldfunc(*args, **kwargs))
     return func
 
-  @classmethod
-  def instance(cls):
-    if not hasattr(cls, '__instance'):
-      cls.__instance = BtcClient(app.config)
-    return cls.__instance
-
 @app.before_first_request
 def initialize():
-  global remote_service
-  app.config.update(read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
-  BtcClient.instance() # Initiate the bitcoin client
-  remote_service = JsonService('%s:%s' % (app.config['rpcconnect'], 3270))
+  global remote_service, btc_client, user_config
+  user_config = read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS)
+  btc_client = BtcClient(user_config)
+  remote_service = JsonService('%s:%s' % (user_config['rpcconnect'], 3270))
 
 if __name__ == '__main__':
   logging.basicConfig(level=logging.DEBUG)
