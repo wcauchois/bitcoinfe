@@ -14,6 +14,7 @@ import sqlite3
 from helpers import *
 from hashlib import sha256
 import re
+from json_service import JsonService
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -31,55 +32,6 @@ def format_number(value):
 
 def time_seconds():
   return int(time.time())
-
-class CircuitBreakerException(Exception):
-  pass
-
-class CircuitBreaker(object):
-  BACKOFF_TIME = 60 # Wait 1 minute before trying again
-
-  def __init__(self):
-    self.down = False
-    self.down_timestamp = None
-
-  def _get(self):
-    raise NotImplementedError
-
-  def _default(self):
-    return None
-
-  def get(self, *args, **kwargs):
-    if not self.down or (time_seconds() - self.down_timestamp) > self.BACKOFF_TIME:
-      try:
-        result = self._get(*args, **kwargs)
-        self.down = False
-        return result
-      except CircuitBreakerException:
-        self.down = True
-        self.down_timestamp = time_seconds()
-        return self._default(*args, **kwargs)
-    else:
-      # We are down and we haven't waited long enough.
-      return self._default(*args, **kwargs)
-
-class JsonServiceBreaker(CircuitBreaker):
-  REQUEST_TIMEOUT = 0.2
-
-  def __init__(self, host):
-    super(JsonServiceBreaker, self).__init__()
-    self.basepath = 'http://%s' % host
-
-  def _get(self, path):
-    try:
-      r = requests.get(self.basepath + path, timeout=self.REQUEST_TIMEOUT)
-    except requests.exceptions.RequestException:
-      raise CircuitBreakerException
-    result_json = r.json()
-    logging.debug('Returned JSON: %s' % json.dumps(result_json))
-    return result_json
-
-  def _default(self, *args):
-    return {}
 
 btc_prefix_pattern = re.compile(r'^bitcoin:')
 def remove_bitcoin_prefix(s):
@@ -253,7 +205,7 @@ def initialize():
   global remote_service
   app.config.update(read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS))
   BtcClient.instance() # Initiate the bitcoin client
-  remote_service = JsonServiceBreaker('%s:%s' % (app.config['rpcconnect'], 3270))
+  remote_service = JsonService('%s:%s' % (app.config['rpcconnect'], 3270))
 
 if __name__ == '__main__':
   logging.basicConfig(level=logging.DEBUG)
