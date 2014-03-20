@@ -9,6 +9,7 @@ import json
 import requests
 import yaml
 import time
+import logging
 import sqlite3
 from helpers import *
 from hashlib import sha256
@@ -73,7 +74,9 @@ class JsonServiceBreaker(CircuitBreaker):
       r = requests.get(self.basepath + path, timeout=self.REQUEST_TIMEOUT)
     except requests.exceptions.RequestException:
       raise CircuitBreakerException
-    return r.json()
+    result_json = r.json()
+    logging.debug('Returned JSON: %s' % json.dumps(result_json))
+    return result_json
 
   def _default(self, *args):
     return {}
@@ -154,9 +157,9 @@ def API_record_stats():
   c = conn.cursor()
   c.execute('insert into stats values(?,?,?,?,?)',
     (time_seconds(),
-    storage_info[u'total'],
-    storage_info[u'used'],
-    storage_info[u'free'],
+    storage_info['total'],
+    storage_info['used'],
+    storage_info['free'],
     bitcoin_info['blocks']))
   conn.commit()
   c.close()
@@ -253,6 +256,7 @@ def initialize():
   remote_service = JsonServiceBreaker('%s:%s' % (app.config['rpcconnect'], 3270))
 
 if __name__ == '__main__':
+  logging.basicConfig(level=logging.DEBUG)
   app.debug = True
   app.run(host='0.0.0.0')
 
