@@ -27,7 +27,7 @@ It is necessary to configure Bitcoinfe to talk to your local (or remote) Bitcoin
     rpcconnect=127.0.0.1 # optional
     rpcpassword=your_bitcoin_PW_here # required
 
-Once you're configurated, you should be able to launch Bitcoinfe:
+Once you're configured, you should be able to launch Bitcoinfe:
 
     python main.py
 
