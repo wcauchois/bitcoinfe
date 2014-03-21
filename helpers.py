@@ -104,3 +104,6 @@ def cleanup_json(json_in):
   else:
     return json_in
 
+def approx_equal(a, b, epsilon=0.00005):
+  return abs(a - b) < epsilon
+

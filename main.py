@@ -3,6 +3,7 @@ from bitcoinrpc.authproxy import AuthServiceProxy
 from flask import Flask, render_template, request, g
 from flask.ext.cache import Cache
 from datetime import datetime
+import time
 import flask
 import json
 import requests
@@ -88,8 +89,13 @@ def API_send_bitcoin():
     amount = float(request.form['amount'])
   except ValueError:
     return 'Amount must be a number', 400
-  btc_client.sendtoaddress(address, amount)
-  return ''
+  record = SendHistoryItem(address, amount)
+  fresh = send_history_buffer.check_maybe_add(record)
+  if not fresh:
+    return 'Tried to double-spend', 400
+  else:
+    btc_client.sendtoaddress(address, amount)
+    return ''
 
 @app.route('/record_stats', methods=['POST'])
 def API_record_stats():
@@ -156,12 +162,41 @@ class BtcClient(AuthServiceProxy):
       return cleanup_json(oldfunc(*args, **kwargs))
     return func
 
+class SendHistoryItem(object):
+  def __init__(self, to_address, amount):
+    self.to_address = to_address
+    self.amount = amount
+    self.timestamp = time.time()
+
+  def equals(self, other):
+    return self.to_address == other.to_address and \
+      approx_equal(self.amount, other.amount)
+
+class SendHistoryBuffer(object):
+  MAX_SECONDS = 3
+
+  def __init__(self):
+    self.items = []
+
+  def _purge_stale_items(self):
+    self.items = [i for i in self.items if \
+      (time.time() - i.timestamp) <= self.MAX_SECONDS]
+
+  def check_maybe_add(self, new_item):
+    self._purge_stale_items()
+    if any(i.equals(new_item) for i in self.items):
+      return False
+    else:
+      self.items.append(new_item)
+      return True
+
 @app.before_first_request
 def initialize():
-  global remote_service, btc_client, user_config
+  global remote_service, btc_client, user_config, send_history_buffer
   user_config = read_config(defaults=DEFAULT_CONFIGS, required=REQUIRED_CONFIGS)
   btc_client = BtcClient(user_config)
   remote_service = JsonService('%s:%s' % (user_config['rpcconnect'], 3270))
+  send_history_buffer = SendHistoryBuffer()
 
 if __name__ == '__main__':
   logging.basicConfig(level=logging.DEBUG)
