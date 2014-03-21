@@ -301,6 +301,12 @@ var SendBitcoinModal = DialogView.extend({
   },
 
   trySend_: function() {
+    if (this.sending_) {
+      return;
+    } else {
+      this.sending_ = true;
+    }
+
     this.$sendButton_.prop('disabled', true); // Disable the button while we submit.
     this.once('validation-success', this.reallySend_, this);
     this.once('validation-failure', function() {
