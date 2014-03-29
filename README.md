@@ -33,7 +33,27 @@ Once you're configured, you should be able to launch Bitcoinfe:
 
 Now, visit localhost:5000 to see the running instance.
 
-**Advanced: Setting up the remote service**
+**Setting up the remote service**
 
-Bitcoinfe is designed to support running on a separate machine from your Bitcoin daemon. However, one feature in particular -- monitoring disk usage -- requires a special remote service to be running on your Bitcoin box. On the remote box, install flask (you can do this either in a virtualenv or globally), and execute `python remote.py` to start the remote service. This service is used only to monitor disk usage on that box.
+Bitcoinfe is designed to support running on a separate machine from your Bitcoin daemon.
+However, one feature in particular -- monitoring disk usage -- requires a special remote
+service to be running on your Bitcoin box. On the remote box, check-out Bitcoinfe and
+execute `python remote.py` to start the service (there are no external dependencies for
+this besides Python). Pass --help to see a list of options. You may want to provide --datadir
+if your Bitcoin data directory is in a nonstandard path (the default is ~/.bitcoin).
+
+**Tracking statistics over time**
+
+Bitcoinfe has the ability to track disk usage and Blockchain stats over time. It stores this
+data in an SQLite database, and can graph it for you using Google charts. To get started
+using this feature, you must first migrate the SQLite database. To do so, run:
+
+    invoke db.migrate
+
+This will create a stats.db file in the current directory. To record stats, you must POST
+to the /record\_stats endpoint whenever you want to store a data-point. To record stats
+priodically, I use `cron` and `curl`. For example, the following entry in a crontab
+will record statistics every 4 hours:
+
+    0 */4 * * * curl -X POST http://localhost:5000/record_stats >/dev/null
 
