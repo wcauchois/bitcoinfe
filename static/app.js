@@ -82,11 +82,11 @@ var HomePage = Backbone.View.extend({
       currentBalance: this.bitcoinInfo_.balance,
       exchangeService: this.exchangeService_,
       sendAddress: address
-    }).open().on('success', function(data) {
+    }).on('success', function(data) {
       this.showAlert(templates.sendBitcoinSuccess(data));
     }, this).on('failure', function() {
       this.showAlert(templates.sendBitcoinFailure());
-    }, this);
+    }, this).open();
   },
 
   showAlert: function(content) {
@@ -99,7 +99,6 @@ var HomePage = Backbone.View.extend({
     }, options));
   }
 });
-
 
 var ExchangeService = function() {
   this.initialize.apply(this, arguments);
@@ -149,7 +148,7 @@ var TransactionListView = Backbone.View.extend({
     }, this));
   },
 
-  renderTransaction_: function(tx) {
+  extendTransaction_: function(tx) {
     var complete = tx['confirmations'] && tx['confirmations'] > 6;
     return _.extend({
       'timestring': tx['time'] && formatDate(new Date(tx['time'] * 1000.0)),
@@ -164,7 +163,7 @@ var TransactionListView = Backbone.View.extend({
 
   render: function() {
     this.$el.empty().append(templates.transactionList({
-      transactions: _.map(this.transactions_, this.renderTransaction_, this)
+      transactions: _.map(this.transactions_, this.extendTransaction_, this)
     }));
     return this;
   }
@@ -418,7 +417,7 @@ var AddressListView = Backbone.View.extend({
     }, this));
   },
 
-  renderAddress_: function(address) {
+  extendAddress_: function(address) {
     var elidedAddress = address['address'] &&
       (address['address'].substring(0, 20) + '...');
     return _.extend({
@@ -442,7 +441,7 @@ var AddressListView = Backbone.View.extend({
 
   render: function() {
     this.$el.empty().append(templates.addressList({
-      addresses: _.map(this.addresses_, this.renderAddress_, this)
+      addresses: _.map(this.addresses_, this.extendAddress_, this)
     }));
     return this.decorate();
   }
