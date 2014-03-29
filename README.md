@@ -39,8 +39,8 @@ Bitcoinfe is designed to support running on a separate machine from your Bitcoin
 However, one feature in particular -- monitoring disk usage -- requires a special remote
 service to be running on your Bitcoin box. On the remote box, check-out Bitcoinfe and
 execute `python remote.py` to start the service (there are no external dependencies for
-this besides Python). Pass --help to see a list of options. You may want to provide --datadir
-if your Bitcoin data directory is in a nonstandard path (the default is ~/.bitcoin).
+this besides Python). Pass `--help` to see a list of options. You may want to provide
+`--datadir` if your Bitcoin data directory is in a nonstandard path (the default is ~/.bitcoin).
 
 **Tracking statistics over time**
 
