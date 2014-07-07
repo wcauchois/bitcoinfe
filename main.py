@@ -19,7 +19,7 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 DEFAULT_CONFIGS = {
   'rpcuser': 'bitcoinrpc',
-  'rpcport': '8322',
+  'rpcport': '8332',
   'rpcconnect': '127.0.0.1'
 }
 REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
