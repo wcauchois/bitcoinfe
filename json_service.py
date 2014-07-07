@@ -16,7 +16,7 @@ class CircuitBreaker(object):
   def _get(self):
     raise NotImplementedError
 
-  def _default(self):
+  def _default(self, *args, **kwargs):
     return None
 
   def get(self, *args, **kwargs):
@@ -49,6 +49,6 @@ class JsonService(CircuitBreaker):
     logging.debug('Returned JSON: %s' % json.dumps(result_json))
     return result_json
 
-  def _default(self, *args):
+  def _default(self, *args, **kwargs):
     return {}
 

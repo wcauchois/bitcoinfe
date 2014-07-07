@@ -104,7 +104,7 @@ def API_send_bitcoin():
 def API_record_stats():
   storage_info = remote_service.get('/storage_info', timeout=5)
   bitcoin_info = get_bitcoin_info()
-  conn = sqlite3.connect('stats.db')
+  conn = sqlite3.connect(relpath('stats.db'))
   c = conn.cursor()
   c.execute('insert into stats values(?,?,?,?,?)',
     (time_seconds(),
@@ -121,7 +121,7 @@ def API_record_stats():
 def API_time_series():
   length = parse_interval(request.args.get('length', '60d'))
   after = time_seconds() - length
-  conn = sqlite3.connect('stats.db')
+  conn = sqlite3.connect(relpath('stats.db'))
   rows = conn.execute('select * from stats where ts > ?', (after,))
   data = []
   for (ts, disk_total, disk_used, disk_free, blocks) in rows:
