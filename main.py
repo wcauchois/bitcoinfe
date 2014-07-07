@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, os.path
 from bitcoinrpc.authproxy import AuthServiceProxy
 from flask import Flask, render_template, request, g
 from flask.ext.cache import Cache
@@ -28,9 +28,12 @@ REQUIRED_CONFIGS = ['rpcuser', 'rpcport', 'rpcconnect', 'rpcpassword']
 def format_number(value):
   return "{:,d}".format(value)
 
+def relpath(p):
+  return os.path.join(os.path.dirname(__file__), p)
+
 @app.route('/')
 def index():
-  templates = yaml.load(open('client/templates.yaml', 'r'))['templates']
+  templates = yaml.load(open(relpath('client/templates.yaml'), 'r'))['templates']
   exchange_rate = get_exchange_rate()
   bitcoin_info = get_bitcoin_info()
   send_address = request.args.get('sendaddress', False)
