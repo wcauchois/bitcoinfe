@@ -8,7 +8,7 @@ Features
  - Responsive layout works well on mobile. Click on a Bitcoin address to open a QR code for that address.
  - Send Bitcoin to another address via the web interface. Generate a new address with the click of a button.
  - Automatic USD to BTC conversion (currently based off Bitstamp but could be modified to support other exchanges).
- - Records various stats over time [experimental]. Currently this includes disk usage and blockchain size.
+ - Records various stats over time. Currently this includes disk usage and blockchain size.
 
 Setup
 ---
