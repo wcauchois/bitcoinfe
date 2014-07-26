@@ -46,11 +46,21 @@ def index():
     sendAddress=send_address,
     bitcoinInfo=bitcoin_info)
 
+_exchange_preference = [
+  'bitstamp',
+  'btce',
+  'bitex'
+]
 @cache.cached(timeout=10, key_prefix='get_exchange_rate')
 def get_exchange_rate():
   r = requests.get('https://api.bitcoinaverage.com/exchanges/USD')
   json = r.json()
-  return json['bitstamp']['rates']['ask']
+  rate = None
+  for p in _exchange_preference:
+    if rate is not None:
+      break
+    rate = json.get(p, {}).get('rates', {}).get('ask')
+  return rate
 
 @cache.cached(timeout=3, key_prefix='get_bitcoin_info')
 def get_bitcoin_info():
